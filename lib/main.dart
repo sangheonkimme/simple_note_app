@@ -1,21 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:isar/isar.dart';
 import 'package:simple_note/src/data/datasources/local/isar_service.dart';
 import 'package:simple_note/src/data/providers.dart';
-import 'package:simple_note/src/features/notes/presentation/home_screen.dart';
+import 'package:simple_note/src/features/scaffold/main_scaffold.dart';
 
 Future<void> main() async {
-  // Ensure that Flutter bindings are initialized
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Isar DB
   final isarService = IsarService();
   final isar = await isarService.db;
+
+  final container = ProviderContainer(overrides: [
+    isarProvider.overrideWithValue(isar),
+  ]);
+
+  await container.read(folderRepositoryProvider).createDefaultFolders();
+  container.dispose();
 
   runApp(
     ProviderScope(
       overrides: [
-        // Override the isarProvider with the actual Isar instance
         isarProvider.overrideWithValue(isar),
       ],
       child: const MyApp(),
@@ -28,13 +33,26 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final seedColor = const Color(0xFF6C4CF5);
+
     return MaterialApp(
       title: 'Simple Note',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: seedColor,
+          brightness: Brightness.light,
+        ),
         useMaterial3: true,
       ),
-      home: const HomeScreen(), // 임시로 홈 화면을 시작 페이지로 설정
+      darkTheme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: seedColor,
+          brightness: Brightness.dark,
+        ),
+        useMaterial3: true,
+      ),
+      themeMode: ThemeMode.system, // Automatically switch based on system settings
+      home: const MainScaffold(),
     );
   }
 }

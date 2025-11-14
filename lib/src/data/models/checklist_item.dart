@@ -4,7 +4,7 @@ part 'checklist_item.g.dart';
 
 @embedded
 class ChecklistItem {
-  late String text;
+  String text = ''; // Initialize with an empty string to prevent LateInitializationError
 
   bool done = false;
   

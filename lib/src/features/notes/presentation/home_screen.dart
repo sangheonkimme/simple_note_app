@@ -1,45 +1,13 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simple_note/src/data/models/folder.dart';
 import 'package:simple_note/src/data/providers.dart';
-import 'package:simple_note/src/features/common/presentation/empty_state_widget.dart';
 import 'package:simple_note/src/features/notes/presentation/folder_notes_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
-
-  void _showAddFolderDialog(BuildContext context, WidgetRef ref) {
-    final controller = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('새 폴더 추가'),
-          content: TextField(
-            controller: controller,
-            decoration: const InputDecoration(hintText: '폴더 이름'),
-            autofocus: true,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('취소'),
-            ),
-            TextButton(
-              onPressed: () {
-                if (controller.text.isNotEmpty) {
-                  final folder = Folder()..name = controller.text;
-                  ref.read(folderRepositoryProvider).saveFolder(folder);
-                  Navigator.pop(context);
-                }
-              },
-              child: const Text('추가'),
-            ),
-          ],
-        );
-      },
-    );
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -47,39 +15,127 @@ class HomeScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('폴더'),
+        toolbarHeight: 80,
+        title: const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Welcome!', style: TextStyle(fontSize: 16, fontWeight: FontWeight.normal)),
+            Text('Novita', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+          ],
+        ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => _showAddFolderDialog(context, ref),
-            tooltip: '새 폴더',
-          )
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: CircleAvatar(
+              child: const Icon(Icons.person_outline),
+            ),
+          ),
         ],
       ),
       body: foldersStream.when(
         data: (folders) {
-          if (folders.isEmpty) {
-            return const EmptyStateWidget(
-              icon: Icons.create_new_folder_outlined,
-              message: '폴더가 없습니다.\n오른쪽 상단의 + 버튼을 눌러\n새 폴더를 추가해보세요.',
-            );
-          }
-          return GridView.builder(
-            padding: const EdgeInsets.all(8.0),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 8.0,
-              mainAxisSpacing: 8.0,
-            ),
-            itemCount: folders.length,
-            itemBuilder: (context, index) {
-              final folder = folders[index];
-              return FolderCard(folder: folder);
-            },
+          return CustomScrollView(
+            slivers: [
+              const SliverToBoxAdapter(
+                child: AvailableSpaceCard(),
+              ),
+              SliverPadding(
+                padding: const EdgeInsets.all(16.0),
+                sliver: SliverGrid.builder(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 16.0,
+                    mainAxisSpacing: 16.0,
+                    childAspectRatio: 0.85,
+                  ),
+                  itemCount: folders.length,
+                  itemBuilder: (context, index) {
+                    final folder = folders[index];
+                    return FolderCard(folder: folder);
+                  },
+                ),
+              ),
+            ],
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => Center(child: Text('오류가 발생했습니다: $error')),
+      ),
+    );
+  }
+}
+
+class AvailableSpaceCard extends ConsumerWidget {
+  const AvailableSpaceCard({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final storageInfo = ref.watch(storageInfoProvider);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16.0, 0, 16.0, 16.0),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24.0),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            padding: const EdgeInsets.all(24.0),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.85),
+              borderRadius: BorderRadius.circular(24.0),
+            ),
+            child: storageInfo.when(
+              data: (info) {
+                final usedSpace = info.usedSpaceGB.toStringAsFixed(2);
+                final totalSpace = info.totalSpaceGB.toStringAsFixed(0);
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.pie_chart_outline, color: Colors.white, size: 24),
+                        ),
+                        const SizedBox(width: 16),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Available Space',
+                              style: TextStyle(fontSize: 16, color: Colors.white.withOpacity(0.9)),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '$usedSpace GB of $totalSpace GB Used',
+                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: LinearProgressIndicator(
+                        value: info.usedSpaceGB / info.totalSpaceGB,
+                        backgroundColor: Colors.white24,
+                        valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                        minHeight: 6,
+                      ),
+                    ),
+                  ],
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator(color: Colors.white)),
+              error: (err, stack) => const Text('Storage info not available', style: TextStyle(color: Colors.white)),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -97,9 +153,24 @@ class FolderCard extends ConsumerStatefulWidget {
 class _FolderCardState extends ConsumerState<FolderCard> {
   bool _isTapped = false;
 
+  // Define styles for default folders
+  static const Map<String, ({IconData icon, Color color})> _folderStyles = {
+    '개인': (icon: Icons.person_outline, color: Colors.blue),
+    '업무': (icon: Icons.business_center_outlined, color: Colors.green),
+    '학업': (icon: Icons.school_outlined, color: Colors.orange),
+    '기타': (icon: Icons.inbox_outlined, color: Colors.purple),
+  };
+
   @override
   Widget build(BuildContext context) {
     final notesCountStream = ref.watch(notesInFolderProvider(widget.folder.id));
+
+    // Get style for the current folder, or a default if not found
+    final style = _folderStyles[widget.folder.name] ??
+        (icon: Icons.folder_open_outlined, color: Theme.of(context).colorScheme.primary);
+    
+    final iconColor = style.color;
+    final backgroundColor = style.color.withOpacity(0.1);
 
     return GestureDetector(
       onTapDown: (_) => setState(() => _isTapped = true),
@@ -107,38 +178,41 @@ class _FolderCardState extends ConsumerState<FolderCard> {
       onTapCancel: () => setState(() => _isTapped = false),
       onTap: () {
         Future.delayed(const Duration(milliseconds: 100), () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => FolderNotesScreen(folder: widget.folder),
-              ),
-            );
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => FolderNotesScreen(folder: widget.folder),
+            ),
+          );
         });
       },
       child: AnimatedScale(
         scale: _isTapped ? 0.95 : 1.0,
         duration: const Duration(milliseconds: 100),
-        child: Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(Icons.folder_outlined, size: 40),
-                const Spacer(),
-                Text(
-                  widget.folder.name,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                notesCountStream.when(
-                  data: (notes) => Text('${notes.length}개 항목'),
-                  loading: () => const Text('...'),
-                  error: (_, __) => const Text('-'),
-                ),
-              ],
-            ),
+        child: Container(
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            borderRadius: BorderRadius.circular(24.0),
+          ),
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(style.icon, size: 40, color: iconColor),
+              const Spacer(),
+              Text(
+                widget.folder.name,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 4),
+              notesCountStream.when(
+                data: (notes) => Text('${notes.length} files', style: Theme.of(context).textTheme.bodySmall),
+                loading: () => Text('...', style: Theme.of(context).textTheme.bodySmall),
+                error: (_, __) => Text('-', style: Theme.of(context).textTheme.bodySmall),
+              ),
+            ],
           ),
         ),
       ),

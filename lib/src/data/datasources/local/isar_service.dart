@@ -1,7 +1,6 @@
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:simple_note/src/data/models/attachment.dart';
-import 'package:simple_note/src/data/models/checklist_item.dart';
 import 'package:simple_note/src/data/models/folder.dart';
 import 'package:simple_note/src/data/models/note.dart';
 import 'package:simple_note/src/data/models/tag.dart';

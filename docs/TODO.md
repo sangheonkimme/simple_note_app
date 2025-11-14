@@ -23,9 +23,9 @@
 
 ### W6: QA 및 최적화
 - [x] QA 테스트 플랜 기반 기능 테스트 수행
-- [ ] 앱 성능 튜닝 (시작 시간, 노트 로딩 속도)
-- [ ] 분석 이벤트 연동 (Firebase Analytics)
-- [ ] 크래시 리포팅 설정 (Firebase Crashlytics)
+- [x] 앱 성능 튜닝 (시작 시간, 노트 로딩 속도)
+- [x] 분석 이벤트 연동 (Firebase Analytics)
+- [x] 크래시 리포팅 설정 (Firebase Crashlytics)
 
 ### W7-8: 베타 테스트 및 출시 준비
 - [ ] TestFlight / Google Play 내부 테스트 배포

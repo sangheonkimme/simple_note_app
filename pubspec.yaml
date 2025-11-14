@@ -2,7 +2,7 @@ name: simple_note
 description: "A new Flutter project."
 publish_to: 'none'
 
-version: 1.0.0+1
+version: 1.0.0+2
 
 environment:
   sdk: ^3.9.2
@@ -13,7 +13,7 @@ dependencies:
 
   cupertino_icons: ^1.0.8
 
-  # State Management & DB from working reference
+  # State Management & DB
   flutter_riverpod: ^2.5.1
   riverpod_annotation: ^2.3.3
   isar: ^3.1.0+1
@@ -26,26 +26,39 @@ dependencies:
   # Unique ID
   uuid: ^4.4.0
 
+  # Firebase
+  firebase_core: ^3.1.1
+  firebase_analytics: ^11.1.0
+  firebase_crashlytics: ^4.0.0
+
+  # Formatting
+  intl: ^0.19.0
+
+  # App Info
+  package_info_plus: ^8.0.0
+  disk_space_plus: ^0.2.6 # Corrected version
+
+  # Native Splash Screen
+  flutter_native_splash: ^2.4.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
   flutter_lints: ^5.0.0
 
-  # Code Generators from working reference
+  # Code Generators
   build_runner: ^2.4.9
   riverpod_generator: ^2.4.0
   isar_generator: ^3.1.0+1
-  
-  # Native Splash Screen
-  flutter_native_splash: ^2.4.1
 
 # Splash Screen Configuration
 flutter_native_splash:
   color: "#6C4CF5"
-  color_dark: "#1C1C1E" # A dark color matching the dark theme
-  # You can add an image here later if you have one
-  # image: assets/splash.png 
+  color_dark: "#1C1C1E"
 
 flutter:
   uses-material-design: true
+
+  assets:
+    - assets/

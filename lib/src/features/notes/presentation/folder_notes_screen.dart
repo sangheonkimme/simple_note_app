@@ -3,13 +3,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:simple_note/src/data/models/folder.dart';
 import 'package:simple_note/src/data/providers.dart';
 import 'package:simple_note/src/features/common/presentation/empty_state_widget.dart';
-import 'package:simple_note/src/features/notes/presentation/home_screen.dart'; // For NoteCard
+import 'package:simple_note/src/features/common/presentation/note_card.dart';
 import 'package:simple_note/src/features/notes/presentation/note_editor_screen.dart';
+import 'package:simple_note/src/features/search/presentation/search_screen.dart';
 
 class FolderNotesScreen extends ConsumerWidget {
-  const FolderNotesScreen({super.key, required this.folder});
+  const FolderNotesScreen({
+    super.key,
+    required this.folder,
+    this.color,
+  });
 
   final Folder folder;
+  final Color? color;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -17,54 +23,96 @@ class FolderNotesScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(folder.name),
+        title: Text(folder.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            onPressed: () {
+              // Navigate to the global search screen
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SearchScreen()),
+              );
+            },
+            icon: const Icon(Icons.search),
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: notesStream.when(
         data: (notes) {
           if (notes.isEmpty) {
-            return const EmptyStateWidget(
-              icon: Icons.note_add_outlined,
-              message: '아직 노트가 없습니다.\n아래 버튼을 눌러 새 노트를 추가해보세요.',
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const EmptyStateWidget(message: '노트가 없습니다.\n새 노트를 추가해보세요.', icon: Icons.note_add_outlined),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: 200,
+                    height: 200,
+                    child: NewNoteCard(folder: folder),
+                  ),
+                ],
+              ),
             );
           }
-          return ListView.builder(
-            itemCount: notes.length,
+          return GridView.builder(
+            padding: const EdgeInsets.all(16.0),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 16.0,
+              mainAxisSpacing: 16.0,
+              childAspectRatio: 0.8,
+            ),
+            itemCount: notes.length + 1, // +1 for the "New note" card
             itemBuilder: (context, index) {
-              final note = notes[index];
-              return Dismissible(
-                key: Key(note.id.toString()),
-                direction: DismissDirection.endToStart,
-                background: Container(
-                  color: Colors.red,
-                  alignment: Alignment.centerRight,
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: const Icon(Icons.delete, color: Colors.white),
-                ),
-                onDismissed: (direction) {
-                  ref.read(noteRepositoryProvider).deleteNote(note.id);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('\"${note.title}\" 노트를 삭제했습니다.')),
-                  );
-                },
-                child: NoteCard(note: note), // Re-using the NoteCard from HomeScreen
-              );
+              if (index == 0) {
+                return NewNoteCard(folder: folder);
+              }
+              final note = notes[index - 1];
+              return NoteCard(note: note);
             },
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(child: Text('오류가 발생했습니다: $error')),
+        error: (error, stack) => EmptyStateWidget(icon: Icons.error_outline, message: '오류가 발생했습니다.\n$error'),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => NoteEditorScreen(note: null, folder: folder),
-            ),
-          );
-        },
-        child: const Icon(Icons.add),
-        tooltip: '새 노트',
+    );
+  }
+}
+
+class NewNoteCard extends StatelessWidget {
+  const NewNoteCard({super.key, this.folder});
+
+  final Folder? folder;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => NoteEditorScreen(folder: folder)),
+        );
+      },
+      borderRadius: BorderRadius.circular(16.0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.primaryContainer,
+          borderRadius: BorderRadius.circular(16.0),
+          border: Border.all(color: Theme.of(context).colorScheme.outline.withOpacity(0.3)),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.add, size: 40, color: Theme.of(context).colorScheme.onPrimaryContainer),
+              const SizedBox(height: 8),
+              Text('New note', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onPrimaryContainer)),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -67,7 +67,9 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
     final body = _bodyController.text;
 
     if (title.isEmpty && body.isEmpty && _checklistItems.every((item) => item.text.isEmpty) && _existingAttachments.isEmpty && _newAttachments.isEmpty) {
-      if (mounted) Navigator.pop(context);
+      if (mounted) {
+        Navigator.pop(context);
+      }
       return;
     }
 
@@ -93,7 +95,16 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
       folder: folder, 
       tags: _selectedTags
     ).then((_) {
-      if (mounted) Navigator.pop(context);
+       // Log note creation event
+      if (widget.note == null) { // Only log for new notes
+        ref.read(analyticsServiceProvider).logNoteCreated(
+          folder: folder?.name ?? 'Uncategorized',
+          hasImage: (_existingAttachments.isNotEmpty || _newAttachments.isNotEmpty),
+        );
+      }
+      if (mounted) {
+        Navigator.pop(context);
+      }
     });
   }
 
@@ -159,8 +170,9 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
               existingAttachments: _existingAttachments,
               newAttachments: _newAttachments,
               onAttachmentDeleted: (attachment) => setState(() {
-                if (_newAttachments.contains(attachment)) _newAttachments.remove(attachment);
-                else if (_existingAttachments.contains(attachment)) {
+                if (_newAttachments.contains(attachment)) {
+                  _newAttachments.remove(attachment);
+                } else if (_existingAttachments.contains(attachment)) {
                   _existingAttachments.remove(attachment);
                   _deletedAttachments.add(attachment);
                 }
@@ -197,7 +209,7 @@ class _TagEditor extends StatelessWidget {
                 ? Material(color: Colors.transparent, child: InkWell(onTap: onAddTag, child: Center(child: Text('태그 추가...', style: TextStyle(color: Colors.grey.shade600)))))
                 : SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
-                    child: Wrap(spacing: 8.0, children: selectedTags.map((tag) => Chip(label: Text(tag.name), onDeleted: () => onTagDeleted(tag))).toList()),
+                    child: Wrap(spacing: 8.0, children: selectedTags.map((tag) => Chip(label: Text(tag.name), onDeleted: () => onTagDeleted(tag), visualDensity: VisualDensity.compact)).toList()),
                   ),
           ),
           IconButton(icon: const Icon(Icons.add_circle_outline), onPressed: onAddTag, tooltip: '태그 추가')
@@ -217,7 +229,9 @@ class _AttachmentEditor extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final allAttachments = [...existingAttachments, ...newAttachments];
-    if (allAttachments.isEmpty) return const SizedBox.shrink();
+    if (allAttachments.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
     return SizedBox(
       height: 100,
@@ -253,7 +267,7 @@ class _TextEditorBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextField(controller: controller, decoration: const InputDecoration(hintText: '내용을 입력하세요...', border: InputBorder.none), maxLines: null, expands: true);
+    return TextField(controller: controller, decoration: const InputDecoration(hintText: '내용을 입력하세요...', border: InputBorder.none), maxLines: null, expands: true, autofocus: false,);
   }
 }
 
@@ -270,7 +284,9 @@ class _ChecklistEditorBody extends StatelessWidget {
       padding: EdgeInsets.zero,
       itemCount: items.length + 1,
       itemBuilder: (context, index) {
-        if (index == items.length) return TextButton.icon(icon: const Icon(Icons.add), label: const Text('항목 추가'), onPressed: onAddItem);
+        if (index == items.length) {
+          return TextButton.icon(icon: const Icon(Icons.add), label: const Text('항목 추가'), onPressed: onAddItem);
+        }
         final item = items[index];
         return Row(
           children: [

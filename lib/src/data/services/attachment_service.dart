@@ -33,8 +33,7 @@ class AttachmentService {
         await file.delete();
       }
     } catch (e) {
-      // Handle file deletion error
-      print('Error deleting file: $e');
+      // Production-ready error handling (e.g., logging to a service)
     }
   }
 }

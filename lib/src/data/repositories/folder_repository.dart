@@ -1,5 +1,5 @@
 import 'package:isar/isar.dart';
-import 'package:simple_note/src/data/models/folder.dart';
+import 'package:novita/src/data/models/folder.dart';
 
 class FolderRepository {
   final Isar isar;

@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:simple_note/src/data/models/attachment.dart';
+import 'package:novita/src/data/models/attachment.dart';
 import 'package:uuid/uuid.dart';
 
 class AttachmentService {

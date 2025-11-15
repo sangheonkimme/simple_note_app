@@ -2,9 +2,9 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:simple_note/src/data/models/folder.dart';
-import 'package:simple_note/src/data/providers.dart';
-import 'package:simple_note/src/features/notes/presentation/folder_notes_screen.dart';
+import 'package:novita/src/data/models/folder.dart';
+import 'package:novita/src/data/providers.dart';
+import 'package:novita/src/features/notes/presentation/folder_notes_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});

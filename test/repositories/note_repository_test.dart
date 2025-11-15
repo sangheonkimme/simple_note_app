@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:isar/isar.dart';
-import 'package:simple_note/src/data/models/note.dart';
-import 'package:simple_note/src/data/models/tag.dart';
-import 'package:simple_note/src/data/repositories/note_repository.dart';
-import 'package:simple_note/src/data/services/attachment_service.dart';
+import 'package:novita/src/data/models/note.dart';
+import 'package:novita/src/data/models/tag.dart';
+import 'package:novita/src/data/repositories/note_repository.dart';
+import 'package:novita/src/data/services/attachment_service.dart';
 
 import '../test_helpers.dart';
 

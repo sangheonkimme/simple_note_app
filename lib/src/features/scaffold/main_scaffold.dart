@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:simple_note/src/data/providers.dart';
-import 'package:simple_note/src/features/notes/presentation/note_editor_screen.dart';
-import 'package:simple_note/src/features/search/presentation/search_screen.dart';
-import 'package:simple_note/src/features/settings/presentation/settings_screen.dart';
-import 'package:simple_note/src/features/notes/presentation/home_screen.dart';
+import 'package:novita/src/data/providers.dart';
+import 'package:novita/src/features/notes/presentation/note_editor_screen.dart';
+import 'package:novita/src/features/search/presentation/search_screen.dart';
+import 'package:novita/src/features/settings/presentation/settings_screen.dart';
+import 'package:novita/src/features/notes/presentation/home_screen.dart';
 
 class MainScaffold extends ConsumerStatefulWidget {
   const MainScaffold({super.key});

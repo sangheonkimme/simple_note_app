@@ -4,10 +4,10 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
-import 'package:simple_note/firebase_options.dart';
-import 'package:simple_note/src/data/datasources/local/isar_service.dart';
-import 'package:simple_note/src/data/providers.dart';
-import 'package:simple_note/src/features/scaffold/main_scaffold.dart';
+import 'package:novita/firebase_options.dart';
+import 'package:novita/src/data/datasources/local/isar_service.dart';
+import 'package:novita/src/data/providers.dart';
+import 'package:novita/src/features/scaffold/main_scaffold.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 
 Future<void> main() async {

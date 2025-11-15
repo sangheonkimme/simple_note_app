@@ -1,9 +1,9 @@
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:simple_note/src/data/models/attachment.dart';
-import 'package:simple_note/src/data/models/folder.dart';
-import 'package:simple_note/src/data/models/note.dart';
-import 'package:simple_note/src/data/models/tag.dart';
+import 'package:novita/src/data/models/attachment.dart';
+import 'package:novita/src/data/models/folder.dart';
+import 'package:novita/src/data/models/note.dart';
+import 'package:novita/src/data/models/tag.dart';
 
 class IsarService {
   late final Future<Isar> db;

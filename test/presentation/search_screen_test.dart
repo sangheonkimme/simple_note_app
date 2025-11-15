@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:isar/isar.dart';
-import 'package:simple_note/src/data/models/note.dart';
-import 'package:simple_note/src/data/providers.dart';
-import 'package:simple_note/src/features/search/presentation/search_screen.dart';
+import 'package:novita/src/data/models/note.dart';
+import 'package:novita/src/data/providers.dart';
+import 'package:novita/src/features/search/presentation/search_screen.dart';
 
 import '../test_helpers.dart';
 

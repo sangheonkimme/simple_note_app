@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:simple_note/src/features/auth/presentation/signup_screen.dart';
+import 'package:novita/src/features/auth/presentation/signup_screen.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});

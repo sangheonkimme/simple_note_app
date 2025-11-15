@@ -1,5 +1,5 @@
 import 'package:isar/isar.dart';
-import 'package:simple_note/src/data/models/note.dart';
+import 'package:novita/src/data/models/note.dart';
 
 part 'folder.g.dart';
 

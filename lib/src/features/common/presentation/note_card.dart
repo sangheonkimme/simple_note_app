@@ -2,8 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart'; // For date formatting
-import 'package:simple_note/src/data/models/note.dart';
-import 'package:simple_note/src/features/notes/presentation/note_editor_screen.dart';
+import 'package:novita/src/data/models/note.dart';
+import 'package:novita/src/features/notes/presentation/note_editor_screen.dart';
 
 class NoteCard extends ConsumerWidget {
   const NoteCard({super.key, required this.note});

@@ -1,15 +1,15 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:isar/isar.dart';
-import 'package:simple_note/src/data/datasources/local/isar_service.dart';
-import 'package:simple_note/src/data/models/folder.dart';
-import 'package:simple_note/src/data/models/note.dart';
-import 'package:simple_note/src/data/models/tag.dart';
-import 'package:simple_note/src/data/repositories/folder_repository.dart';
-import 'package:simple_note/src/data/repositories/note_repository.dart';
-import 'package:simple_note/src/data/repositories/tag_repository.dart';
-import 'package:simple_note/src/data/services/analytics_service.dart';
-import 'package:simple_note/src/data/services/attachment_service.dart';
-import 'package:simple_note/src/data/services/storage_service.dart';
+import 'package:novita/src/data/datasources/local/isar_service.dart';
+import 'package:novita/src/data/models/folder.dart';
+import 'package:novita/src/data/models/note.dart';
+import 'package:novita/src/data/models/tag.dart';
+import 'package:novita/src/data/repositories/folder_repository.dart';
+import 'package:novita/src/data/repositories/note_repository.dart';
+import 'package:novita/src/data/repositories/tag_repository.dart';
+import 'package:novita/src/data/services/analytics_service.dart';
+import 'package:novita/src/data/services/attachment_service.dart';
+import 'package:novita/src/data/services/storage_service.dart';
 
 // --- Core Providers ---
 final isarProvider = Provider<Isar>((ref) {

@@ -1,9 +1,9 @@
 import 'package:isar/isar.dart';
-import 'package:simple_note/src/data/models/attachment.dart';
-import 'package:simple_note/src/data/models/folder.dart';
-import 'package:simple_note/src/data/models/note.dart';
-import 'package:simple_note/src/data/models/tag.dart';
-import 'package:simple_note/src/data/services/attachment_service.dart';
+import 'package:novita/src/data/models/attachment.dart';
+import 'package:novita/src/data/models/folder.dart';
+import 'package:novita/src/data/models/note.dart';
+import 'package:novita/src/data/models/tag.dart';
+import 'package:novita/src/data/services/attachment_service.dart';
 
 class NoteRepository {
   final Isar isar;

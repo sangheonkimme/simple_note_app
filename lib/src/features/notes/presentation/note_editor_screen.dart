@@ -3,12 +3,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:simple_note/src/data/models/attachment.dart';
-import 'package:simple_note/src/data/models/checklist_item.dart';
-import 'package:simple_note/src/data/models/folder.dart';
-import 'package:simple_note/src/data/models/note.dart';
-import 'package:simple_note/src/data/models/tag.dart';
-import 'package:simple_note/src/data/providers.dart';
+import 'package:novita/src/data/models/attachment.dart';
+import 'package:novita/src/data/models/checklist_item.dart';
+import 'package:novita/src/data/models/folder.dart';
+import 'package:novita/src/data/models/note.dart';
+import 'package:novita/src/data/models/tag.dart';
+import 'package:novita/src/data/providers.dart';
 
 class NoteEditorScreen extends ConsumerStatefulWidget {
   const NoteEditorScreen({super.key, this.note, this.folder});

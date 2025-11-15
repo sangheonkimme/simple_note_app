@@ -1,5 +1,5 @@
 import 'package:isar/isar.dart';
-import 'package:simple_note/src/data/models/tag.dart';
+import 'package:novita/src/data/models/tag.dart';
 
 class TagRepository {
   final Isar isar;

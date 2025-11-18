@@ -53,36 +53,80 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
 
   @override
   Widget build(BuildContext context) {
+    final destinations = [
+      NavigationDestination(
+        icon: const Icon(Icons.home_outlined),
+        selectedIcon: const Icon(Icons.home_filled),
+        label: '홈',
+      ),
+      NavigationDestination(
+        icon: const Icon(Icons.search_outlined),
+        selectedIcon: const Icon(Icons.search),
+        label: '검색',
+      ),
+      NavigationDestination(
+        icon: const Icon(Icons.dashboard_outlined),
+        selectedIcon: const Icon(Icons.dashboard_customize_rounded),
+        label: '보드',
+      ),
+      NavigationDestination(
+        icon: const Icon(Icons.settings_outlined),
+        selectedIcon: const Icon(Icons.settings),
+        label: '설정',
+      ),
+    ];
+
     return Scaffold(
       body: IndexedStack(
         index: _selectedIndex,
         children: _widgetOptions,
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const NoteEditorScreen(),
+      floatingActionButton: SizedBox(
+        height: 68,
+        width: 68,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              colors: [
+                Theme.of(context).colorScheme.primary,
+                Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-          );
-        },
-        shape: const CircleBorder(),
-        child: const Icon(Icons.add),
+            boxShadow: [
+              BoxShadow(
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                blurRadius: 18,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: IconButton(
+            icon: const Icon(Icons.add, color: Colors.white, size: 30),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const NoteEditorScreen(),
+                ),
+              );
+            },
+          ),
+        ),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomAppBar(
-        shape: const CircularNotchedRectangle(),
-        notchMargin: 8.0,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: <Widget>[
-            IconButton(icon: Icon(Icons.home_filled, color: _selectedIndex == 0 ? Theme.of(context).colorScheme.primary : Colors.grey), onPressed: () => _onItemTapped(0)),
-            IconButton(icon: Icon(Icons.search, color: _selectedIndex == 1 ? Theme.of(context).colorScheme.primary : Colors.grey), onPressed: () => _onItemTapped(1)),
-            const SizedBox(width: 40), // The space for the FAB
-            IconButton(icon: Icon(Icons.list_alt_outlined, color: _selectedIndex == 2 ? Theme.of(context).colorScheme.primary : Colors.grey), onPressed: () => _onItemTapped(2)),
-            IconButton(icon: Icon(Icons.settings_outlined, color: _selectedIndex == 3 ? Theme.of(context).colorScheme.primary : Colors.grey), onPressed: () => _onItemTapped(3)),
-          ],
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(26),
+          child: NavigationBar(
+            height: 72,
+            selectedIndex: _selectedIndex,
+            onDestinationSelected: _onItemTapped,
+            destinations: destinations,
+          ),
         ),
       ),
     );

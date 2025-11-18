@@ -10,7 +10,7 @@ class AnalyticsService {
 
   // Log screen views
   Future<void> logScreenView(String screenName) async {
-    await _analytics.setCurrentScreen(screenName: screenName);
+    await _analytics.logScreenView(screenName: screenName);
   }
 
   // Log when a note is created

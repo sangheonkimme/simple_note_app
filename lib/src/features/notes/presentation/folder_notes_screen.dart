@@ -23,12 +23,11 @@ class FolderNotesScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(folder.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(folder.name, style: const TextStyle(fontWeight: FontWeight.w700)),
         centerTitle: true,
         actions: [
-          IconButton(
+          IconButton.filledTonal(
             onPressed: () {
-              // Navigate to the global search screen
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const SearchScreen()),
@@ -58,12 +57,12 @@ class FolderNotesScreen extends ConsumerWidget {
             );
           }
           return GridView.builder(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
               crossAxisSpacing: 16.0,
               mainAxisSpacing: 16.0,
-              childAspectRatio: 0.8,
+              childAspectRatio: 0.82,
             ),
             itemCount: notes.length + 1, // +1 for the "New note" card
             itemBuilder: (context, index) {
@@ -99,17 +98,31 @@ class NewNoteCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(16.0),
       child: Container(
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.primaryContainer,
-          borderRadius: BorderRadius.circular(16.0),
-          border: Border.all(color: Theme.of(context).colorScheme.outline.withOpacity(0.3)),
+          borderRadius: BorderRadius.circular(26.0),
+          gradient: LinearGradient(
+            colors: [
+              Theme.of(context).colorScheme.primary.withValues(alpha: 0.18),
+              Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          border: Border.all(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2)),
         ),
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.add, size: 40, color: Theme.of(context).colorScheme.onPrimaryContainer),
+              Icon(Icons.add_circle, size: 44, color: Theme.of(context).colorScheme.primary),
               const SizedBox(height: 8),
-              Text('New note', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onPrimaryContainer)),
+              Text(
+                'New note',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
             ],
           ),
         ),

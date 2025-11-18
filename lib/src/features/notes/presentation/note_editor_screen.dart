@@ -142,49 +142,127 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        actions: [
-          IconButton(icon: const Icon(Icons.add_photo_alternate_outlined), onPressed: () => showModalBottomSheet(context: context, builder: (context) => SafeArea(child: Wrap(
-            children: <Widget>[
-              ListTile(leading: const Icon(Icons.photo_library), title: const Text('갤러리에서 선택'), onTap: () { _pickImage(ImageSource.gallery); Navigator.of(context).pop(); }),
-              ListTile(leading: const Icon(Icons.photo_camera), title: const Text('카메라로 촬영'), onTap: () { _pickImage(ImageSource.camera); Navigator.of(context).pop(); }),
-            ],
-          ))), tooltip: '이미지 첨부'),
-          IconButton(icon: Icon(_noteType == NoteType.text ? Icons.check_box_outline_blank : Icons.notes), onPressed: () => setState(() => _noteType = _noteType == NoteType.text ? NoteType.checklist : NoteType.text), tooltip: '모드 변경'),
-          IconButton(icon: const Icon(Icons.save), onPressed: _saveNote, tooltip: '저장'),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        child: Column(
+        titleSpacing: 16,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TextField(
-              controller: _titleController,
-              decoration: const InputDecoration(hintText: '제목', border: InputBorder.none),
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              maxLines: 1,
+            Text(
+              widget.note == null ? '새 노트' : '노트 편집',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
             ),
-            const Divider(height: 1),
-            _TagEditor(selectedTags: _selectedTags, onTagDeleted: (tag) => setState(() => _selectedTags.remove(tag)), onAddTag: _showTagSelectionDialog),
-            const Divider(height: 1),
-            _AttachmentEditor( 
-              existingAttachments: _existingAttachments,
-              newAttachments: _newAttachments,
-              onAttachmentDeleted: (attachment) => setState(() {
-                if (_newAttachments.contains(attachment)) {
-                  _newAttachments.remove(attachment);
-                } else if (_existingAttachments.contains(attachment)) {
-                  _existingAttachments.remove(attachment);
-                  _deletedAttachments.add(attachment);
-                }
-              }),
-            ),
-            if (_existingAttachments.isNotEmpty || _newAttachments.isNotEmpty) const Divider(height: 1),
-            Expanded(
-              child: _noteType == NoteType.text
-                  ? _TextEditorBody(controller: _bodyController)
-                  : _ChecklistEditorBody(items: _checklistItems, onAddItem: _addChecklistItem, onItemChanged: (item, value) => setState(() => item.done = value)),
+            Text(
+              '아이디어를 자유롭게 적어보세요',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
             ),
           ],
+        ),
+        actions: [
+          IconButton.filledTonal(
+            tooltip: '이미지 첨부',
+            onPressed: () => showModalBottomSheet(
+              context: context,
+              showDragHandle: true,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+              builder: (context) => SafeArea(
+                child: Wrap(
+                  children: <Widget>[
+                    ListTile(
+                      leading: const Icon(Icons.photo_library),
+                      title: const Text('갤러리에서 선택'),
+                      onTap: () {
+                        _pickImage(ImageSource.gallery);
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.photo_camera),
+                      title: const Text('카메라로 촬영'),
+                      onTap: () {
+                        _pickImage(ImageSource.camera);
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            icon: const Icon(Icons.add_photo_alternate_outlined),
+          ),
+          const SizedBox(width: 8),
+          IconButton.filled(
+            tooltip: '저장',
+            onPressed: _saveNote,
+            icon: const Icon(Icons.check_rounded),
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+          child: Column(
+            children: [
+              _FrostedField(
+                child: TextField(
+                  controller: _titleController,
+                  decoration: const InputDecoration(hintText: '제목을 입력하세요'),
+                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
+                  maxLines: 1,
+                ),
+              ),
+              const SizedBox(height: 16),
+              _TagEditor(
+                selectedTags: _selectedTags,
+                onTagDeleted: (tag) => setState(() => _selectedTags.remove(tag)),
+                onAddTag: _showTagSelectionDialog,
+              ),
+              const SizedBox(height: 12),
+              SegmentedButton<NoteType>(
+                showSelectedIcon: false,
+                segments: const [
+                  ButtonSegment(value: NoteType.text, label: Text('텍스트'), icon: Icon(Icons.notes_rounded)),
+                  ButtonSegment(value: NoteType.checklist, label: Text('체크리스트'), icon: Icon(Icons.checklist_rounded)),
+                ],
+                style: ButtonStyle(
+                  padding: WidgetStateProperty.all(const EdgeInsets.symmetric(horizontal: 16, vertical: 12)),
+                  textStyle: WidgetStateProperty.all(const TextStyle(fontWeight: FontWeight.w600)),
+                ),
+                selected: {_noteType},
+                onSelectionChanged: (value) => setState(() => _noteType = value.first),
+              ),
+              const SizedBox(height: 16),
+              _AttachmentEditor( 
+                existingAttachments: _existingAttachments,
+                newAttachments: _newAttachments,
+                onAttachmentDeleted: (attachment) => setState(() {
+                  if (_newAttachments.contains(attachment)) {
+                    _newAttachments.remove(attachment);
+                  } else if (_existingAttachments.contains(attachment)) {
+                    _existingAttachments.remove(attachment);
+                    _deletedAttachments.add(attachment);
+                  }
+                }),
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(28),
+                    border: Border.all(color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.3)),
+                  ),
+                  padding: const EdgeInsets.all(20),
+                  child: _noteType == NoteType.text
+                      ? _TextEditorBody(controller: _bodyController)
+                      : _ChecklistEditorBody(
+                          items: _checklistItems,
+                          onAddItem: _addChecklistItem,
+                          onItemChanged: (item, value) => setState(() => item.done = value),
+                        ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -200,21 +278,42 @@ class _TagEditor extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 48,
-      child: Row(
-        children: [
-          Expanded(
-            child: selectedTags.isEmpty
-                ? Material(color: Colors.transparent, child: InkWell(onTap: onAddTag, child: Center(child: Text('태그 추가...', style: TextStyle(color: Colors.grey.shade600)))))
-                : SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Wrap(spacing: 8.0, children: selectedTags.map((tag) => Chip(label: Text(tag.name), onDeleted: () => onTagDeleted(tag), visualDensity: VisualDensity.compact)).toList()),
-                  ),
-          ),
-          IconButton(icon: const Icon(Icons.add_circle_outline), onPressed: onAddTag, tooltip: '태그 추가')
-        ],
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.3)),
       ),
+      child: selectedTags.isEmpty
+          ? TextButton.icon(
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.grey.shade600,
+                padding: EdgeInsets.zero,
+                alignment: Alignment.centerLeft,
+              ),
+              onPressed: onAddTag,
+              icon: const Icon(Icons.add_circle_outline),
+              label: const Text('태그 추가...'),
+            )
+          : Wrap(
+              spacing: 8.0,
+              runSpacing: 8.0,
+              children: [
+                ...selectedTags.map(
+                  (tag) => Chip(
+                    label: Text(tag.name),
+                    onDeleted: () => onTagDeleted(tag),
+                  ),
+                ),
+                ActionChip(
+                  avatar: const Icon(Icons.add, size: 16),
+                  label: const Text('추가'),
+                  onPressed: onAddTag,
+                ),
+              ],
+            ),
     );
   }
 }
@@ -234,25 +333,36 @@ class _AttachmentEditor extends StatelessWidget {
     }
 
     return SizedBox(
-      height: 100,
-      child: ListView.builder(
+      height: 120,
+      child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: allAttachments.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 12),
         itemBuilder: (context, index) {
           final attachment = allAttachments[index];
           return Stack(
-            alignment: Alignment.topRight,
             children: [
-              Container(
-                margin: const EdgeInsets.only(right: 8, top: 8, bottom: 8),
-                width: 80, height: 80,
-                decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), image: DecorationImage(image: FileImage(File(attachment.filePath)), fit: BoxFit.cover)),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: Image.file(
+                  File(attachment.filePath),
+                  width: 120,
+                  height: 120,
+                  fit: BoxFit.cover,
+                ),
               ),
-              IconButton(
-                constraints: const BoxConstraints(), padding: EdgeInsets.zero,
-                icon: const CircleAvatar(backgroundColor: Colors.black54, radius: 12, child: Icon(Icons.close, color: Colors.white, size: 14)),
-                onPressed: () => onAttachmentDeleted(attachment),
-              )
+              Positioned(
+                right: 6,
+                top: 6,
+                child: GestureDetector(
+                  onTap: () => onAttachmentDeleted(attachment),
+                  child: const CircleAvatar(
+                    radius: 14,
+                    backgroundColor: Colors.black54,
+                    child: Icon(Icons.close, size: 16, color: Colors.white),
+                  ),
+                ),
+              ),
             ],
           );
         },
@@ -267,7 +377,17 @@ class _TextEditorBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextField(controller: controller, decoration: const InputDecoration(hintText: '내용을 입력하세요...', border: InputBorder.none), maxLines: null, expands: true, autofocus: false,);
+    return TextField(
+      controller: controller,
+      decoration: const InputDecoration(
+        hintText: '내용을 입력하세요...',
+        border: InputBorder.none,
+      ),
+      style: const TextStyle(fontSize: 16, height: 1.6),
+      maxLines: null,
+      expands: true,
+      autofocus: false,
+    );
   }
 }
 
@@ -280,21 +400,71 @@ class _ChecklistEditorBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      padding: EdgeInsets.zero,
-      itemCount: items.length + 1,
-      itemBuilder: (context, index) {
-        if (index == items.length) {
-          return TextButton.icon(icon: const Icon(Icons.add), label: const Text('항목 추가'), onPressed: onAddItem);
-        }
-        final item = items[index];
-        return Row(
-          children: [
-            Checkbox(value: item.done, onChanged: (value) => onItemChanged(item, value ?? false)),
-            Expanded(child: TextFormField(initialValue: item.text, onChanged: (value) => item.text = value, decoration: const InputDecoration(hintText: '할 일', border: InputBorder.none))),
-          ],
-        );
-      },
+    final controller = ScrollController();
+    return Scrollbar(
+      controller: controller,
+      child: ListView.separated(
+        controller: controller,
+        padding: EdgeInsets.zero,
+        itemCount: items.length + 1,
+        separatorBuilder: (_, __) => const SizedBox(height: 12),
+        itemBuilder: (context, index) {
+          if (index == items.length) {
+            return OutlinedButton.icon(
+              onPressed: onAddItem,
+              icon: const Icon(Icons.add),
+              label: const Text('항목 추가'),
+            );
+          }
+          final item = items[index];
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              children: [
+                Checkbox(
+                  value: item.done,
+                  onChanged: (value) => onItemChanged(item, value ?? false),
+                ),
+                Expanded(
+                  child: TextFormField(
+                    initialValue: item.text,
+                    onChanged: (value) => item.text = value,
+                    decoration: const InputDecoration(
+                      hintText: '할 일을 입력하세요',
+                      border: InputBorder.none,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _FrostedField extends StatelessWidget {
+  const _FrostedField({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.3)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        child: child,
+      ),
     );
   }
 }

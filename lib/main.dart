@@ -7,6 +7,7 @@ import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:novita/firebase_options.dart';
 import 'package:novita/src/data/datasources/local/isar_service.dart';
 import 'package:novita/src/data/providers.dart';
+import 'package:novita/src/features/common/presentation/app_theme.dart';
 import 'package:novita/src/features/scaffold/main_scaffold.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 
@@ -52,36 +53,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final seedColor = const Color(0xFF6C4CF5);
-
     return MaterialApp(
       title: 'Novita', // Change app name to Novita
       debugShowCheckedModeBanner: false, // Remove debug banner
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: seedColor,
-          brightness: Brightness.light,
-          surface: const Color(0xFFF6F7FB), // Set background color from design
-        ),
-        scaffoldBackgroundColor: const Color(0xFFF6F7FB), // Apply to all scaffolds
-        useMaterial3: true,
-        appBarTheme: const AppBarTheme(
-          elevation: 0,
-          scrolledUnderElevation: 0,
-          backgroundColor: Color(0xFFF6F7FB), // Match scaffold background
-        ),
-        textTheme: const TextTheme(
-          headlineMedium: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
-          bodyMedium: TextStyle(color: Colors.black54),
-        )
-      ),
-      darkTheme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: seedColor,
-          brightness: Brightness.dark,
-        ),
-        useMaterial3: true,
-      ),
+      theme: AppTheme.light(),
+      darkTheme: AppTheme.dark(),
       themeMode: ThemeMode.system, 
       home: const MainScaffold(),
     );

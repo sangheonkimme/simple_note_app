@@ -38,6 +38,9 @@ dependencies:
   package_info_plus: ^8.0.0
   disk_space_plus: ^0.2.6 # Corrected version
 
+  # Typography
+  google_fonts: ^6.2.1
+
   # Native Splash Screen
   flutter_native_splash: ^2.4.1
 

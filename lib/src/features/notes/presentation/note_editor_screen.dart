@@ -11,10 +11,11 @@ import 'package:novita/src/data/models/tag.dart';
 import 'package:novita/src/data/providers.dart';
 
 class NoteEditorScreen extends ConsumerStatefulWidget {
-  const NoteEditorScreen({super.key, this.note, this.folder});
+  const NoteEditorScreen({super.key, this.note, this.folder, this.initialNoteType = NoteType.text});
 
   final Note? note;
   final Folder? folder;
+  final NoteType initialNoteType;
 
   @override
   ConsumerState<NoteEditorScreen> createState() => _NoteEditorScreenState();
@@ -39,7 +40,7 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
 
     _titleController = TextEditingController(text: widget.note?.title ?? '');
     _bodyController = TextEditingController(text: widget.note?.body ?? '');
-    _noteType = widget.note?.type ?? NoteType.text;
+    _noteType = widget.note?.type ?? widget.initialNoteType;
     _checklistItems = widget.note?.checklistItems.map((item) => ChecklistItem()..text = item.text..done = item.done).toList() ?? [];
     _selectedTags = widget.note?.tags.toList() ?? [];
     _existingAttachments.addAll(widget.note?.attachments ?? []);

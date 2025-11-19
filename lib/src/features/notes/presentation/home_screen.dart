@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novita/src/data/models/folder.dart';
+import 'package:novita/src/data/models/note.dart';
 import 'package:novita/src/data/providers.dart';
 import 'package:novita/src/features/notes/presentation/folder_notes_screen.dart';
 import 'package:novita/src/features/notes/presentation/note_editor_screen.dart';
@@ -30,37 +31,39 @@ class HomeScreen extends ConsumerWidget {
                         const AvailableSpaceCard(),
                         const SizedBox(height: 32),
                         _HomeActionRow(actions: [
-                          _QuickAction(
-                            icon: Icons.add_circle_outline_rounded,
-                            label: 'New Note',
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const NoteEditorScreen(),
+                        _QuickAction(
+                          icon: Icons.check_circle_outline_rounded,
+                          label: '할 일',
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const NoteEditorScreen(
+                                  initialNoteType: NoteType.checklist,
                                 ),
-                              );
-                            },
-                          ),
-                          _QuickAction(
-                            icon: Icons.push_pin_outlined,
-                            label: 'Pinned',
-                            onTap: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Pinned notes coming soon')),
-                              );
-                            },
-                          ),
-                          _QuickAction(
-                            icon: Icons.label_outline_rounded,
-                            label: 'Tags',
-                            onTap: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Tag management coming soon')),
-                              );
-                            },
-                          ),
-                        ]),
+                              ),
+                            );
+                          },
+                        ),
+                        _QuickAction(
+                          icon: Icons.push_pin_outlined,
+                          label: '고정됨',
+                          onTap: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('곧 고정 노트 보드가 제공될 예정입니다.')),
+                            );
+                          },
+                        ),
+                        _QuickAction(
+                          icon: Icons.tag_outlined,
+                          label: '태그 관리',
+                          onTap: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('태그 관리 기능은 다음 업데이트에서 제공됩니다.')),
+                            );
+                          },
+                        ),
+                      ]),
                         const SizedBox(height: 32),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,

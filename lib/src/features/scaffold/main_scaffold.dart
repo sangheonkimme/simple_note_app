@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -56,55 +57,57 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
     final destinations = [
       NavigationDestination(
         icon: const Icon(Icons.home_outlined),
-        selectedIcon: const Icon(Icons.home_filled),
-        label: '홈',
+        selectedIcon: const Icon(Icons.home_rounded),
+        label: 'Home',
       ),
       NavigationDestination(
-        icon: const Icon(Icons.search_outlined),
-        selectedIcon: const Icon(Icons.search),
-        label: '검색',
+        icon: const Icon(Icons.search_rounded),
+        selectedIcon: const Icon(Icons.search_rounded),
+        label: 'Search',
       ),
       NavigationDestination(
         icon: const Icon(Icons.dashboard_outlined),
-        selectedIcon: const Icon(Icons.dashboard_customize_rounded),
-        label: '보드',
+        selectedIcon: const Icon(Icons.dashboard_rounded),
+        label: 'Board',
       ),
       NavigationDestination(
         icon: const Icon(Icons.settings_outlined),
-        selectedIcon: const Icon(Icons.settings),
-        label: '설정',
+        selectedIcon: const Icon(Icons.settings_rounded),
+        label: 'Settings',
       ),
     ];
 
     return Scaffold(
+      extendBody: true, // Important for floating effect if we add transparency
       body: IndexedStack(
         index: _selectedIndex,
         children: _widgetOptions,
       ),
-      floatingActionButton: SizedBox(
-        height: 68,
-        width: 68,
+      floatingActionButton: Container(
+        height: 72,
+        width: 72,
+        margin: const EdgeInsets.only(bottom: 20), // Adjust for custom nav bar height
         child: DecoratedBox(
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             gradient: LinearGradient(
               colors: [
                 Theme.of(context).colorScheme.primary,
-                Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
+                const Color(0xFF8E72FF),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             boxShadow: [
               BoxShadow(
-                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
-                blurRadius: 18,
-                offset: const Offset(0, 10),
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
+                blurRadius: 24,
+                offset: const Offset(0, 12),
               ),
             ],
           ),
           child: IconButton(
-            icon: const Icon(Icons.add, color: Colors.white, size: 30),
+            icon: const Icon(Icons.add_rounded, color: Colors.white, size: 36),
             onPressed: () {
               Navigator.push(
                 context,
@@ -116,16 +119,31 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
           ),
         ),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: Container(
+        margin: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(32),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 30,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(26),
-          child: NavigationBar(
-            height: 72,
-            selectedIndex: _selectedIndex,
-            onDestinationSelected: _onItemTapped,
-            destinations: destinations,
+          borderRadius: BorderRadius.circular(32),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: NavigationBar(
+              height: 76,
+              selectedIndex: _selectedIndex,
+              onDestinationSelected: _onItemTapped,
+              destinations: destinations,
+              backgroundColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0.85),
+              elevation: 0,
+            ),
           ),
         ),
       ),

@@ -1,6 +1,5 @@
 import 'package:isar/isar.dart';
 import 'package:novita/src/data/models/folder.dart';
-import 'package:novita/src/data/models/tag.dart';
 import 'package:novita/src/data/models/checklist_item.dart';
 import 'package:novita/src/data/models/attachment.dart';
 
@@ -11,6 +10,15 @@ enum NoteType { text, checklist }
 @collection
 class Note {
   Id id = Isar.autoIncrement;
+
+  @Index()
+  String? remoteId;
+
+  DateTime? lastSyncedAt;
+
+  bool isDirty = false;
+
+  DateTime? deletedAt;
 
   late String title;
 
@@ -30,8 +38,6 @@ class Note {
   DateTime updatedAt = DateTime.now();
 
   final folder = IsarLink<Folder>();
-
-  final tags = IsarLinks<Tag>();
 
   List<ChecklistItem> checklistItems = [];
 

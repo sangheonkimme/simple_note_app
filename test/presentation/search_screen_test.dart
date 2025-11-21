@@ -38,7 +38,7 @@ void main() {
 
       // Assert
       expect(find.text('노트의 제목, 내용 또는\n태그를 검색하여 노트를 찾아보세요.'), findsOneWidget);
-      expect(find.byType(ListView), findsNothing);
+      expect(find.byType(GridView), findsNothing);
     });
 
     testWidgets('should display search results when a matching query is entered', (tester) async {
@@ -57,7 +57,7 @@ void main() {
       // Assert
       expect(find.text('Flutter Test'), findsOneWidget);
       expect(find.text('Isar Database'), findsNothing);
-      expect(find.byType(ListView), findsOneWidget);
+      expect(find.byType(GridView), findsOneWidget);
     });
 
     testWidgets('should display no results message when query does not match', (tester) async {
@@ -75,7 +75,7 @@ void main() {
 
       // Assert
       expect(find.text('검색 결과가 없습니다.'), findsOneWidget);
-      expect(find.byType(ListView), findsNothing);
+      expect(find.byType(GridView), findsNothing);
     });
   });
 }

@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:novita/src/data/providers.dart';
+import 'package:novita/src/features/auth/data/auth_provider.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
-class SettingsScreen extends StatefulWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  State<SettingsScreen> createState() => _SettingsScreenState();
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Future<PackageInfo>? _packageInfoFuture;
 
   @override
@@ -57,8 +60,37 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 subtitle: Text('$version ($buildNumber)'),
               ),
               const Divider(),
-              // Add other settings items here in the future
-              // e.g., ListTile(title: const Text('다크 모드 설정')),
+              ListTile(
+                leading: const Icon(Icons.sync),
+                title: const Text('지금 동기화'),
+                onTap: () async {
+                  final syncService = ref.read(syncServiceProvider);
+                  await syncService.sync();
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('동기화가 완료되었습니다.')),
+                    );
+                  }
+                },
+              ),
+              const Divider(),
+              FutureBuilder<bool>(
+                future: ref.read(authRepositoryProvider).isGuest(),
+                builder: (context, snapshot) {
+                  final isGuest = snapshot.data ?? false;
+                  return ListTile(
+                    leading: Icon(isGuest ? Icons.login : Icons.logout, color: isGuest ? Colors.blue : Colors.red),
+                    title: Text(
+                      isGuest ? '로그인 / 회원가입' : '로그아웃',
+                      style: TextStyle(color: isGuest ? Colors.blue : Colors.red),
+                    ),
+                    onTap: () async {
+                      await ref.read(authStateProvider.notifier).logout();
+                      // Navigation to AuthScreen is handled by main.dart's authState listener
+                    },
+                  );
+                },
+              ),
             ],
           );
         },

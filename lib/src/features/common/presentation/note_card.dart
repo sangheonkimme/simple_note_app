@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart'; // For date formatting
 import 'package:novita/src/data/models/note.dart';
+import 'package:novita/src/data/providers.dart';
 import 'package:novita/src/features/notes/presentation/note_editor_screen.dart';
 
 class NoteCard extends ConsumerWidget {
@@ -20,10 +21,10 @@ class NoteCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     note.attachments.loadSync(); // Ensure attachments are loaded
-    note.tags.loadSync();
     final hasAttachments = note.attachments.isNotEmpty;
-    final tags = note.tags.toList();
-    final palette = _palette[note.id % _palette.length];
+    final palette = note.type == NoteType.checklist 
+        ? _palette[2]  // 체크리스트: 노랑 계열
+        : _palette[0]; // 텍스트: 보라색 계열
 
     return InkWell(
       onTap: () {
@@ -59,28 +60,43 @@ class NoteCard extends ConsumerWidget {
                   isChecklist: note.type == NoteType.checklist,
                   accent: palette.$1,
                 ),
-                if (hasAttachments)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: palette.$1.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.photo_outlined, size: 14, color: palette.$1),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${note.attachments.length}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: palette.$1,
-                          ),
+                Row(
+                  children: [
+                    if (hasAttachments)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: palette.$1.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(18),
                         ),
-                      ],
+                        child: Row(
+                          children: [
+                            Icon(Icons.photo_outlined, size: 14, color: palette.$1),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${note.attachments.length}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: palette.$1,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: () async {
+                        await ref.read(noteRepositoryProvider).togglePinStatus(note.id);
+                      },
+                      child: Icon(
+                        note.pinned ? Icons.push_pin : Icons.push_pin_outlined,
+                        size: 20,
+                        color: note.pinned ? palette.$1 : Colors.grey.shade400,
+                      ),
                     ),
-                  ),
+                  ],
+                ),
               ],
             ),
             const SizedBox(height: 12),
@@ -119,33 +135,7 @@ class NoteCard extends ConsumerWidget {
                 ),
               ),
             ],
-            if (tags.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 6,
-                children: tags
-                    .take(3)
-                    .map(
-                      (tag) => Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: palette.$2,
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: Text(
-                          '#${tag.name}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey.shade700,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    )
-                    .toList(),
-              ),
-            ],
+
             const SizedBox(height: 12),
             Row(
               children: [

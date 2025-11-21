@@ -2,13 +2,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:isar/isar.dart';
 import 'package:novita/src/data/models/folder.dart';
 import 'package:novita/src/data/models/note.dart';
-import 'package:novita/src/data/models/tag.dart';
 import 'package:novita/src/data/repositories/folder_repository.dart';
 import 'package:novita/src/data/repositories/note_repository.dart';
-import 'package:novita/src/data/repositories/tag_repository.dart';
 import 'package:novita/src/data/services/analytics_service.dart';
 import 'package:novita/src/data/services/attachment_service.dart';
 import 'package:novita/src/data/services/storage_service.dart';
+import 'package:novita/src/data/services/sync_service.dart';
+import 'package:novita/src/data/repositories/sync_repository.dart';
 
 // --- Core Providers ---
 final isarProvider = Provider<Isar>((ref) {
@@ -29,6 +29,16 @@ final storageServiceProvider = Provider<StorageService>((ref) {
   return StorageService(isar);
 });
 
+final syncRepositoryProvider = Provider<SyncRepository>((ref) {
+  return MockSyncRepository();
+});
+
+final syncServiceProvider = Provider<SyncService>((ref) {
+  final isar = ref.watch(isarProvider);
+  final syncRepository = ref.watch(syncRepositoryProvider);
+  return SyncService(isar, syncRepository);
+});
+
 final storageInfoProvider = FutureProvider<StorageInfo>((ref) {
   final storageService = ref.watch(storageServiceProvider);
   return storageService.getStorageUsage();
@@ -47,16 +57,18 @@ final folderRepositoryProvider = Provider<FolderRepository>((ref) {
   return FolderRepository(isar);
 });
 
-final tagRepositoryProvider = Provider<TagRepository>((ref) {
-  final isar = ref.watch(isarProvider);
-  return TagRepository(isar);
-});
+
 
 
 // --- Data Stream Providers ---
-final notesStreamProvider = StreamProvider<List<Note>>((ref) {
+final allNotesStreamProvider = StreamProvider<List<Note>>((ref) {
   final noteRepository = ref.watch(noteRepositoryProvider);
   return noteRepository.watchAllNotes();
+});
+
+final pinnedNotesProvider = StreamProvider<List<Note>>((ref) {
+  final noteRepository = ref.watch(noteRepositoryProvider);
+  return noteRepository.watchAllNotes().map((notes) => notes.where((note) => note.pinned).toList());
 });
 
 final notesInFolderProvider = StreamProvider.family<List<Note>, int>((ref, folderId) {
@@ -69,10 +81,7 @@ final foldersStreamProvider = StreamProvider<List<Folder>>((ref) {
   return folderRepository.watchAllFolders();
 });
 
-final tagsStreamProvider = StreamProvider<List<Tag>>((ref) {
-  final tagRepository = ref.watch(tagRepositoryProvider);
-  return tagRepository.watchAllTags();
-});
+
 
 // --- Search Providers ---
 final searchQueryProvider = StateProvider<String>((ref) => '');

@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novita/src/data/models/folder.dart';
@@ -6,6 +5,7 @@ import 'package:novita/src/data/models/note.dart';
 import 'package:novita/src/data/providers.dart';
 import 'package:novita/src/features/notes/presentation/folder_notes_screen.dart';
 import 'package:novita/src/features/notes/presentation/note_editor_screen.dart';
+import 'package:novita/src/features/notes/presentation/pinned_notes_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -31,39 +31,34 @@ class HomeScreen extends ConsumerWidget {
                         const AvailableSpaceCard(),
                         const SizedBox(height: 32),
                         _HomeActionRow(actions: [
-                        _QuickAction(
-                          icon: Icons.check_circle_outline_rounded,
-                          label: '할 일',
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const NoteEditorScreen(
-                                  initialNoteType: NoteType.checklist,
+                          _QuickAction(
+                            icon: Icons.check_circle_outline_rounded,
+                            label: 'Checklist',
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const NoteEditorScreen(
+                                    initialNoteType: NoteType.checklist,
+                                  ),
                                 ),
-                              ),
-                            );
-                          },
-                        ),
-                        _QuickAction(
-                          icon: Icons.push_pin_outlined,
-                          label: '고정됨',
-                          onTap: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('곧 고정 노트 보드가 제공될 예정입니다.')),
-                            );
-                          },
-                        ),
-                        _QuickAction(
-                          icon: Icons.tag_outlined,
-                          label: '태그 관리',
-                          onTap: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('태그 관리 기능은 다음 업데이트에서 제공됩니다.')),
-                            );
-                          },
-                        ),
-                      ]),
+                              );
+                            },
+                          ),
+                          _QuickAction(
+                            icon: Icons.push_pin_outlined,
+                            label: 'Pinned',
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const PinnedNotesScreen(),
+                                ),
+                              );
+                            },
+                          ),
+
+                        ]),
                         const SizedBox(height: 32),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -73,8 +68,8 @@ class HomeScreen extends ConsumerWidget {
                               style: Theme.of(context).textTheme.titleLarge,
                             ),
                             IconButton(
-                              onPressed: () {},
-                              icon: Icon(Icons.more_horiz, color: Colors.grey.shade400),
+                              onPressed: () => _showCreateFolderDialog(context, ref),
+                              icon: Icon(Icons.add_circle_outline_rounded, color: Theme.of(context).colorScheme.primary),
                               style: IconButton.styleFrom(
                                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                               ),
@@ -108,6 +103,43 @@ class HomeScreen extends ConsumerWidget {
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, stack) => Center(child: Text('Error: $error')),
         ),
+      ),
+    );
+  }
+
+  void _showCreateFolderDialog(BuildContext context, WidgetRef ref) {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('새 폴더 만들기'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            hintText: '폴더 이름',
+            border: OutlineInputBorder(),
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('취소'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              final name = controller.text.trim();
+              if (name.isNotEmpty) {
+                final folder = Folder()..name = name;
+                await ref.read(folderRepositoryProvider).saveFolder(folder);
+                if (context.mounted) {
+                  Navigator.pop(context);
+                }
+              }
+            },
+            child: const Text('만들기'),
+          ),
+        ],
       ),
     );
   }
@@ -229,102 +261,102 @@ class AvailableSpaceCard extends ConsumerWidget {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: const Icon(Icons.cloud_queue_rounded, color: Colors.white, size: 24),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: const Icon(Icons.cloud_queue_rounded, color: Colors.white, size: 24),
+                            ),
+                            const SizedBox(width: 16),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Cloud Storage',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.white.withValues(alpha: 0.9),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'My Plan',
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 16),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        const Spacer(),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'Cloud Storage',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.white.withValues(alpha: 0.9),
-                                fontWeight: FontWeight.w500,
+                              '$usedSpace GB used',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
                               ),
                             ),
-                            const SizedBox(height: 2),
                             Text(
-                              'My Plan',
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
+                              '$totalSpace GB total',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.white.withValues(alpha: 0.8),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Stack(
+                          children: [
+                            Container(
+                              height: 8,
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            FractionallySizedBox(
+                              widthFactor: percent.clamp(0.0, 1.0),
+                              child: Container(
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(10),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.white.withValues(alpha: 0.4),
+                                      blurRadius: 8,
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ],
                         ),
                       ],
-                    ),
-                    const Spacer(),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          '$usedSpace GB used',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                        Text(
-                          '$totalSpace GB total',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.white.withValues(alpha: 0.8),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Stack(
-                      children: [
-                        Container(
-                          height: 8,
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        FractionallySizedBox(
-                          widthFactor: percent.clamp(0.0, 1.0),
-                          child: Container(
-                            height: 8,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(10),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.white.withValues(alpha: 0.4),
-                                  blurRadius: 8,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                );
-              },
-              loading: () => const Center(child: CircularProgressIndicator(color: Colors.white)),
-              error: (_, __) => const Text('Unavailable', style: TextStyle(color: Colors.white)),
-            ),
+                    );
+                  },
+                  loading: () => const Center(child: CircularProgressIndicator(color: Colors.white)),
+                  error: (_, __) => const Text('Unavailable', style: TextStyle(color: Colors.white)),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
-    );
+        );
   }
 }
 
@@ -352,7 +384,7 @@ class _FolderCardState extends ConsumerState<FolderCard> {
     final notesCountStream = ref.watch(notesInFolderProvider(widget.folder.id));
     
     final style = _folderStyles[widget.folder.name] ??
-        (icon: Icons.folder_outlined, color: Theme.of(context).colorScheme.primary);
+        (icon: Icons.folder_outlined, color: Theme.of(context).colorScheme.primary.withValues(alpha: 1.0));
 
     return GestureDetector(
       onTapDown: (_) => setState(() => _isPressed = true),

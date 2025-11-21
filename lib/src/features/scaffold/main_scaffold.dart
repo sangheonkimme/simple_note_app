@@ -7,6 +7,7 @@ import 'package:novita/src/features/notes/presentation/note_editor_screen.dart';
 import 'package:novita/src/features/search/presentation/search_screen.dart';
 import 'package:novita/src/features/settings/presentation/settings_screen.dart';
 import 'package:novita/src/features/notes/presentation/home_screen.dart';
+// import 'package:novita/src/features/calendar/presentation/calendar_screen.dart';
 
 class MainScaffold extends ConsumerStatefulWidget {
   const MainScaffold({super.key});
@@ -21,7 +22,9 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
   static final List<Widget> _widgetOptions = <Widget>[
     const HomeScreen(),
     const SearchScreen(),
-    const Scaffold(body: Center(child: Text('Coming Soon'))), // Placeholder for other screens
+    const SizedBox.shrink(), // Placeholder for FAB gap
+    // const CalendarScreen(),
+    const Scaffold(body: Center(child: Text('Coming Soon'))),
     const SettingsScreen(), // Use the new SettingsScreen
   ];
 
@@ -29,7 +32,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
   static const List<String> _screenNames = <String>[
     'Home',
     'Search',
-    'Placeholder', // Or a more descriptive name
+    'Calendar',
     'Settings',
   ];
 
@@ -54,31 +57,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
 
   @override
   Widget build(BuildContext context) {
-    final destinations = [
-      NavigationDestination(
-        icon: const Icon(Icons.home_outlined),
-        selectedIcon: const Icon(Icons.home_rounded),
-        label: 'Home',
-      ),
-      NavigationDestination(
-        icon: const Icon(Icons.search_rounded),
-        selectedIcon: const Icon(Icons.search_rounded),
-        label: 'Search',
-      ),
-      NavigationDestination(
-        icon: const Icon(Icons.dashboard_outlined),
-        selectedIcon: const Icon(Icons.dashboard_rounded),
-        label: 'Board',
-      ),
-      NavigationDestination(
-        icon: const Icon(Icons.settings_outlined),
-        selectedIcon: const Icon(Icons.settings_rounded),
-        label: 'Settings',
-      ),
-    ];
-
     return Scaffold(
-      extendBody: true, // Important for floating effect if we add transparency
       body: IndexedStack(
         index: _selectedIndex,
         children: _widgetOptions,
@@ -140,7 +119,35 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
               height: 76,
               selectedIndex: _selectedIndex,
               onDestinationSelected: _onItemTapped,
-              destinations: destinations,
+              destinations: [
+                NavigationDestination(
+                  icon: Icon(Icons.home_outlined,
+                      color: Theme.of(context).iconTheme.color?.withValues(alpha: 0.6)),
+                  selectedIcon: const Icon(Icons.home_rounded, color: Color(0xFF6C4CF5)),
+                  label: 'Home',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.search_outlined,
+                      color: Theme.of(context).iconTheme.color?.withValues(alpha: 0.6)),
+                  selectedIcon: const Icon(Icons.search_rounded, color: Color(0xFF6C4CF5)),
+                  label: 'Search',
+                ),
+                const SizedBox(width: 48), // Space for FAB
+                NavigationDestination(
+                  icon: Icon(Icons.calendar_today_outlined,
+                      color: Theme.of(context).iconTheme.color?.withValues(alpha: 0.6)),
+                  selectedIcon:
+                      const Icon(Icons.calendar_today_rounded, color: Color(0xFF6C4CF5)),
+                  label: 'Calendar',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.settings_outlined,
+                      color: Theme.of(context).iconTheme.color?.withValues(alpha: 0.6)),
+                  selectedIcon:
+                      const Icon(Icons.settings_rounded, color: Color(0xFF6C4CF5)),
+                  label: 'Settings',
+                ),
+              ],
               backgroundColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0.85),
               elevation: 0,
             ),

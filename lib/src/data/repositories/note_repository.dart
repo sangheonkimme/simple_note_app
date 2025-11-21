@@ -2,7 +2,6 @@ import 'package:isar/isar.dart';
 import 'package:novita/src/data/models/attachment.dart';
 import 'package:novita/src/data/models/folder.dart';
 import 'package:novita/src/data/models/note.dart';
-import 'package:novita/src/data/models/tag.dart';
 import 'package:novita/src/data/services/attachment_service.dart';
 
 class NoteRepository {
@@ -15,7 +14,7 @@ class NoteRepository {
     Note note,
     List<Attachment> attachmentsToSave,
     List<Attachment> attachmentsToDelete,
-      {Folder? folder, List<Tag>? tags}) async {
+      {Folder? folder}) async {
     await isar.writeTxn(() async {
       // Delete attachments marked for deletion
       for (var attachment in attachmentsToDelete) {
@@ -24,20 +23,18 @@ class NoteRepository {
       }
       
       // Save note
+      note.isDirty = true;
       await isar.notes.put(note);
 
       // Link to folder
       if (folder != null) {
-        note.folder.value = folder;
+        // Reload folder to ensure it's attached to the current transaction/Isar instance
+        final folderToLink = await isar.folders.get(folder.id);
+        if (folderToLink != null) {
+          note.folder.value = folderToLink;
+          await note.folder.save();
+        }
       }
-      await note.folder.save();
-
-      // Link to tags
-      if (tags != null) {
-        note.tags.clear();
-        note.tags.addAll(tags);
-      }
-      await note.tags.save();
       
       // Save new attachments and link to note
       await isar.attachments.putAll(attachmentsToSave);
@@ -47,16 +44,17 @@ class NoteRepository {
   }
 
   Future<List<Note>> getAllNotes() async {
-    return await isar.notes.where().sortByUpdatedAtDesc().findAll();
+    return await isar.notes.where().filter().deletedAtIsNull().sortByUpdatedAtDesc().findAll();
   }
 
   Stream<List<Note>> watchAllNotes() {
-    return isar.notes.where().sortByUpdatedAtDesc().watch(fireImmediately: true);
+    return isar.notes.where().filter().deletedAtIsNull().sortByUpdatedAtDesc().watch(fireImmediately: true);
   }
 
   Stream<List<Note>> watchNotesInFolder(int folderId) {
     return isar.notes
         .filter()
+        .deletedAtIsNull()
         .folder((q) => q.idEqualTo(folderId))
         .sortByUpdatedAtDesc()
         .watch(fireImmediately: true);
@@ -68,25 +66,35 @@ class NoteRepository {
     }
     return await isar.notes
         .filter()
-        .titleContains(query, caseSensitive: false)
-        .or()
-        .bodyContains(query, caseSensitive: false)
-        .or()
-        .tags((q) => q.nameContains(query, caseSensitive: false))
+        .deletedAtIsNull()
+        .group((q) => q
+            .titleContains(query, caseSensitive: false)
+            .or()
+            .bodyContains(query, caseSensitive: false))
         .sortByUpdatedAtDesc()
         .findAll();
+  }
+
+  Future<void> togglePinStatus(int id) async {
+    await isar.writeTxn(() async {
+      final note = await isar.notes.get(id);
+      if (note != null) {
+        note.pinned = !note.pinned;
+        note.isDirty = true;
+        note.updatedAt = DateTime.now();
+        await isar.notes.put(note);
+      }
+    });
   }
 
   Future<void> deleteNote(int id) async {
     await isar.writeTxn(() async {
       final note = await isar.notes.get(id);
       if (note != null) {
-        await note.attachments.load();
-        for (var attachment in note.attachments) {
-          await attachmentService.deleteAttachmentFile(attachment);
-        }
+        note.deletedAt = DateTime.now();
+        note.isDirty = true;
+        await isar.notes.put(note);
       }
-      await isar.notes.delete(id);
     });
   }
 }

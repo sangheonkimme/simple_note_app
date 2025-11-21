@@ -57,6 +57,16 @@ class SearchScreen extends ConsumerWidget {
                   return ChoiceChip(
                     label: Text(chipLabel),
                     selected: isSelected,
+                    showCheckmark: false,
+                    selectedColor: Theme.of(context).colorScheme.primaryContainer,
+                    backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                    labelStyle: TextStyle(
+                      color: isSelected 
+                          ? Theme.of(context).colorScheme.onPrimaryContainer 
+                          : Theme.of(context).colorScheme.onSurfaceVariant,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                    ),
+                    side: isSelected ? BorderSide.none : BorderSide(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3)),
                     onSelected: (_) {
                       ref.read(searchQueryProvider.notifier).state = chipLabel;
                     },

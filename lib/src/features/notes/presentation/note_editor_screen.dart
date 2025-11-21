@@ -7,7 +7,6 @@ import 'package:novita/src/data/models/attachment.dart';
 import 'package:novita/src/data/models/checklist_item.dart';
 import 'package:novita/src/data/models/folder.dart';
 import 'package:novita/src/data/models/note.dart';
-import 'package:novita/src/data/models/tag.dart';
 import 'package:novita/src/data/providers.dart';
 
 class NoteEditorScreen extends ConsumerStatefulWidget {
@@ -26,7 +25,7 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
   late final TextEditingController _bodyController;
   late NoteType _noteType;
   late List<ChecklistItem> _checklistItems;
-  late List<Tag> _selectedTags;
+  Folder? _selectedFolder;
 
   final List<Attachment> _existingAttachments = [];
   final List<Attachment> _newAttachments = [];
@@ -35,15 +34,32 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
   @override
   void initState() {
     super.initState();
-    widget.note?.tags.loadSync();
     widget.note?.attachments.loadSync();
 
     _titleController = TextEditingController(text: widget.note?.title ?? '');
     _bodyController = TextEditingController(text: widget.note?.body ?? '');
     _noteType = widget.note?.type ?? widget.initialNoteType;
     _checklistItems = widget.note?.checklistItems.map((item) => ChecklistItem()..text = item.text..done = item.done).toList() ?? [];
-    _selectedTags = widget.note?.tags.toList() ?? [];
     _existingAttachments.addAll(widget.note?.attachments ?? []);
+    _selectedFolder = widget.folder ?? widget.note?.folder.value;
+    
+    // If no folder is selected, try to find "기타" folder or default to first available
+    if (_selectedFolder == null) {
+      _loadDefaultFolder();
+    }
+  }
+
+  Future<void> _loadDefaultFolder() async {
+    final folders = await ref.read(folderRepositoryProvider).watchAllFolders().first;
+    if (mounted) {
+      setState(() {
+        // Try to find '기타' (Misc) folder, otherwise use the first one
+        _selectedFolder = folders.cast<Folder?>().firstWhere(
+          (f) => f?.name == '기타',
+          orElse: () => folders.isNotEmpty ? folders.first : null,
+        );
+      });
+    }
   }
 
   @override
@@ -87,14 +103,16 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
     }
     noteToSave.updatedAt = DateTime.now();
 
-    final folder = widget.folder ?? widget.note?.folder.value;
+    noteToSave.updatedAt = DateTime.now();
+    
+    // Use selected folder
+    final folder = _selectedFolder;
 
     noteRepository.saveNote(
       noteToSave, 
       _newAttachments, 
       _deletedAttachments,
-      folder: folder, 
-      tags: _selectedTags
+      folder: _selectedFolder
     ).then((_) {
        // Log note creation event
       if (widget.note == null) { // Only log for new notes
@@ -107,34 +125,6 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
         Navigator.pop(context);
       }
     });
-  }
-
-  void _showTagSelectionDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('태그 선택'),
-        contentPadding: const EdgeInsets.all(16.0),
-        content: TagSelectionContent(
-          allTagsProvider: tagsStreamProvider,
-          selectedTags: _selectedTags,
-          onTagSelected: (tag) => setState(() {
-            if (_selectedTags.any((t) => t.id == tag.id)) {
-              _selectedTags.removeWhere((t) => t.id == tag.id);
-            } else {
-              _selectedTags.add(tag);
-            }
-          }),
-          onTagCreated: (tagName) async {
-            final tag = await ref.read(tagRepositoryProvider).getOrCreateTag(tagName);
-            setState(() {
-              if (!_selectedTags.any((t) => t.id == tag.id)) _selectedTags.add(tag);
-            });
-          },
-        ),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('완료'))],
-      ),
-    );
   }
 
   void _addChecklistItem() => setState(() => _checklistItems.add(ChecklistItem()));
@@ -190,6 +180,21 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
             icon: const Icon(Icons.add_photo_alternate_outlined),
           ),
           const SizedBox(width: 8),
+          IconButton(
+            tooltip: widget.note?.pinned == true ? '고정 해제' : '고정',
+            onPressed: widget.note == null ? null : () async {
+              await ref.read(noteRepositoryProvider).togglePinStatus(widget.note!.id);
+              if (mounted) {
+                setState(() {
+                  // Trigger rebuild to update icon
+                });
+              }
+            },
+            icon: Icon(
+              widget.note?.pinned == true ? Icons.push_pin : Icons.push_pin_outlined,
+            ),
+          ),
+          const SizedBox(width: 8),
           IconButton.filled(
             tooltip: '저장',
             onPressed: _saveNote,
@@ -203,6 +208,12 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
           child: Column(
             children: [
+              // Folder Selector
+              _FolderSelector(
+                selectedFolder: _selectedFolder,
+                onFolderSelected: (folder) => setState(() => _selectedFolder = folder),
+              ),
+              const SizedBox(height: 8),
               _FrostedField(
                 child: TextField(
                   controller: _titleController,
@@ -212,12 +223,6 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              _TagEditor(
-                selectedTags: _selectedTags,
-                onTagDeleted: (tag) => setState(() => _selectedTags.remove(tag)),
-                onAddTag: _showTagSelectionDialog,
-              ),
-              const SizedBox(height: 12),
               SegmentedButton<NoteType>(
                 showSelectedIcon: false,
                 segments: const [
@@ -270,54 +275,6 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
   }
 }
 
-class _TagEditor extends StatelessWidget {
-  final List<Tag> selectedTags;
-  final Function(Tag) onTagDeleted;
-  final VoidCallback onAddTag;
-
-  const _TagEditor({required this.selectedTags, required this.onTagDeleted, required this.onAddTag});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.3)),
-      ),
-      child: selectedTags.isEmpty
-          ? TextButton.icon(
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.grey.shade600,
-                padding: EdgeInsets.zero,
-                alignment: Alignment.centerLeft,
-              ),
-              onPressed: onAddTag,
-              icon: const Icon(Icons.add_circle_outline),
-              label: const Text('태그 추가...'),
-            )
-          : Wrap(
-              spacing: 8.0,
-              runSpacing: 8.0,
-              children: [
-                ...selectedTags.map(
-                  (tag) => Chip(
-                    label: Text(tag.name),
-                    onDeleted: () => onTagDeleted(tag),
-                  ),
-                ),
-                ActionChip(
-                  avatar: const Icon(Icons.add, size: 16),
-                  label: const Text('추가'),
-                  onPressed: onAddTag,
-                ),
-              ],
-            ),
-    );
-  }
-}
 
 class _AttachmentEditor extends StatelessWidget {
   final List<Attachment> existingAttachments;
@@ -387,6 +344,7 @@ class _TextEditorBody extends StatelessWidget {
       style: const TextStyle(fontSize: 16, height: 1.6),
       maxLines: null,
       expands: true,
+      textAlignVertical: TextAlignVertical.top,
       autofocus: false,
     );
   }
@@ -470,43 +428,66 @@ class _FrostedField extends StatelessWidget {
   }
 }
 
-class TagSelectionContent extends ConsumerWidget {
-  final StreamProvider<List<Tag>> allTagsProvider;
-  final List<Tag> selectedTags;
-  final Function(Tag) onTagSelected;
-  final Function(String) onTagCreated;
+class _FolderSelector extends ConsumerWidget {
+  final Folder? selectedFolder;
+  final Function(Folder) onFolderSelected;
 
-  const TagSelectionContent({super.key, required this.allTagsProvider, required this.selectedTags, required this.onTagSelected, required this.onTagCreated});
+  const _FolderSelector({required this.selectedFolder, required this.onFolderSelected});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final tagsStream = ref.watch(allTagsProvider);
-    final newTagController = TextEditingController();
+    final foldersAsync = ref.watch(foldersStreamProvider);
 
-    return SizedBox(
-      width: double.maxFinite,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(controller: newTagController, decoration: InputDecoration(hintText: '새 태그 생성 또는 검색', suffixIcon: IconButton(icon: const Icon(Icons.add), onPressed: () {
-            if (newTagController.text.isNotEmpty) { onTagCreated(newTagController.text); newTagController.clear(); }
-          }))),
-          const SizedBox(height: 16),
-          Flexible(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.4),
-              child: tagsStream.when(
-                data: (tags) => ListView.builder(shrinkWrap: true, itemCount: tags.length, itemBuilder: (context, index) {
-                  final tag = tags[index];
-                  return CheckboxListTile(title: Text(tag.name), value: selectedTags.any((t) => t.id == tag.id), onChanged: (_) => onTagSelected(tag));
-                }),
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (err, stack) => const Center(child: Text('태그를 불러올 수 없습니다.')),
+    return foldersAsync.when(
+      data: (folders) {
+        if (folders.isEmpty) return const SizedBox.shrink();
+        
+        return Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          child: Row(
+            children: [
+              Icon(Icons.folder_open_rounded, size: 18, color: Colors.grey.shade600),
+              const SizedBox(width: 8),
+              PopupMenuButton<Folder>(
+                initialValue: selectedFolder,
+                onSelected: onFolderSelected,
+                itemBuilder: (context) {
+                  return folders.map((folder) {
+                    return PopupMenuItem<Folder>(
+                      value: folder,
+                      child: Text(folder.name),
+                    );
+                  }).toList();
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        selectedFolder?.name ?? '폴더 선택',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(Icons.arrow_drop_down_rounded, color: Theme.of(context).colorScheme.primary),
+                    ],
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
     );
   }
 }

@@ -5,9 +5,9 @@ A simple, modern note-taking application built with Flutter.
 ## ✨ Features
 
 - **📝 Rich Note Editor**: Create notes with text or interactive checklists.
-- **📂 Organize Your Way**: Group notes into folders and add tags for easy categorization.
+- **📂 Organize Your Way**: Group notes into folders for easy categorization.
 - **🖼️ Image Attachments**: Add images to your notes from the gallery or camera.
-- **🔍 Powerful Search**: Quickly find notes by searching titles, content, or tags.
+- **🔍 Powerful Search**: Quickly find notes by searching titles or content.
 - **🎨 Modern UI**: Includes a dark mode for comfortable viewing in low-light conditions.
 - **📊 Analytics & Monitoring**: Integrated with Firebase Analytics and Crashlytics.
 

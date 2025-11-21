@@ -7,6 +7,15 @@ part 'folder.g.dart';
 class Folder {
   Id id = Isar.autoIncrement;
 
+  @Index()
+  String? remoteId;
+
+  DateTime? lastSyncedAt;
+
+  bool isDirty = false;
+
+  DateTime? deletedAt;
+
   late String name;
 
   bool isSystem = false;

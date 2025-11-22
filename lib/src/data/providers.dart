@@ -66,9 +66,9 @@ final allNotesStreamProvider = StreamProvider<List<Note>>((ref) {
   return noteRepository.watchAllNotes();
 });
 
-final pinnedNotesProvider = StreamProvider<List<Note>>((ref) {
+final pinnedNotesStreamProvider = StreamProvider<List<Note>>((ref) {
   final noteRepository = ref.watch(noteRepositoryProvider);
-  return noteRepository.watchAllNotes().map((notes) => notes.where((note) => note.pinned).toList());
+  return noteRepository.watchPinnedNotes();
 });
 
 final notesInFolderProvider = StreamProvider.family<List<Note>, int>((ref, folderId) {

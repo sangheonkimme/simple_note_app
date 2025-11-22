@@ -5,7 +5,6 @@ import 'package:novita/src/data/models/note.dart';
 import 'package:novita/src/data/providers.dart';
 import 'package:novita/src/features/notes/presentation/folder_notes_screen.dart';
 import 'package:novita/src/features/notes/presentation/note_editor_screen.dart';
-import 'package:novita/src/features/notes/presentation/pinned_notes_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -22,59 +21,40 @@ class HomeScreen extends ConsumerWidget {
               slivers: [
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+                    padding: const EdgeInsets.only(top: 16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const _HomeHeader(),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 24),
+                          child: _HomeHeader(),
+                        ),
                         const SizedBox(height: 32),
-                        const AvailableSpaceCard(),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 24),
+                          child: AvailableSpaceCard(),
+                        ),
                         const SizedBox(height: 32),
-                        _HomeActionRow(actions: [
-                          _QuickAction(
-                            icon: Icons.check_circle_outline_rounded,
-                            label: 'Checklist',
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const NoteEditorScreen(
-                                    initialNoteType: NoteType.checklist,
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                          _QuickAction(
-                            icon: Icons.push_pin_outlined,
-                            label: 'Pinned',
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const PinnedNotesScreen(),
-                                ),
-                              );
-                            },
-                          ),
-
-                        ]),
+                        const _PinnedNotesSection(), // Pinned notes horizontal slider
                         const SizedBox(height: 32),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'My Folders',
-                              style: Theme.of(context).textTheme.titleLarge,
-                            ),
-                            IconButton(
-                              onPressed: () => _showCreateFolderDialog(context, ref),
-                              icon: Icon(Icons.add_circle_outline_rounded, color: Theme.of(context).colorScheme.primary),
-                              style: IconButton.styleFrom(
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'My Folders',
+                                style: Theme.of(context).textTheme.titleLarge,
                               ),
-                            ),
-                          ],
+                              IconButton(
+                                onPressed: () => _showCreateFolderDialog(context, ref),
+                                icon: Icon(Icons.add_circle_outline_rounded, color: Theme.of(context).colorScheme.primary),
+                                style: IconButton.styleFrom(
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                         const SizedBox(height: 16),
                       ],
@@ -360,6 +340,106 @@ class AvailableSpaceCard extends ConsumerWidget {
   }
 }
 
+class _PinnedNotesSection extends ConsumerWidget {
+  const _PinnedNotesSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final pinnedNotesAsync = ref.watch(pinnedNotesStreamProvider);
+    
+    return pinnedNotesAsync.when(
+      data: (notes) {
+        if (notes.isEmpty) {
+          return const SizedBox.shrink(); // Don't show the section if there are no pinned notes
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Text(
+                'Pinned Notes',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 140, // Height for the horizontal list
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: notes.length,
+                itemBuilder: (context, index) {
+                  final note = notes[index];
+                  return Padding(
+                    padding: EdgeInsets.only(
+                      left: index == 0 ? 24 : 16,
+                      right: index == notes.length - 1 ? 24 : 0,
+                    ),
+                    child: _PinnedNoteCard(note: note),
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
+      loading: () => const SizedBox(height: 140, child: Center(child: CircularProgressIndicator())),
+      error: (e, st) => const SizedBox.shrink(), // Don't show on error either
+    );
+  }
+}
+
+class _PinnedNoteCard extends StatelessWidget {
+  const _PinnedNoteCard({required this.note});
+
+  final Note note;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => NoteEditorScreen(note: note),
+          ),
+        );
+      },
+      child: Container(
+        width: 160, // Width of each card
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(24),
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              note.title,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 8),
+            if (note.body != null && note.body!.isNotEmpty)
+              Expanded(
+                child: Text(
+                  note.body!,
+                  style: Theme.of(context).textTheme.bodySmall,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class FolderCard extends ConsumerStatefulWidget {
   const FolderCard({super.key, required this.folder});
 
@@ -450,77 +530,6 @@ class _FolderCardState extends ConsumerState<FolderCard> {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _QuickAction {
-  const _QuickAction({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-}
-
-class _HomeActionRow extends StatelessWidget {
-  const _HomeActionRow({required this.actions});
-
-  final List<_QuickAction> actions;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: actions.map((action) => _ActionButton(action: action)).toList(),
-    );
-  }
-}
-
-class _ActionButton extends StatelessWidget {
-  const _ActionButton({required this.action});
-
-  final _QuickAction action;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: action.onTap,
-      child: Column(
-        children: [
-          Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 12,
-                  offset: const Offset(0, 6),
-                ),
-              ],
-            ),
-            child: Icon(
-              action.icon,
-              color: Theme.of(context).colorScheme.primary,
-              size: 26,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            action.label,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: Colors.grey.shade700,
-            ),
-          ),
-        ],
       ),
     );
   }

@@ -28,7 +28,6 @@ class FolderRepository {
   }
 
   Stream<List<Folder>> watchAllFolders() {
-    // Use the correct Isar sort method `sortByName()` instead of `sortBy('name')`
     return isar.folders.where().sortByName().watch(fireImmediately: true);
   }
 }

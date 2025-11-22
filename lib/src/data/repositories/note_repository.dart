@@ -51,6 +51,16 @@ class NoteRepository {
     return isar.notes.where().filter().deletedAtIsNull().sortByUpdatedAtDesc().watch(fireImmediately: true);
   }
 
+  Stream<List<Note>> watchPinnedNotes() {
+    return isar.notes
+        .where()
+        .filter()
+        .pinnedEqualTo(true)
+        .deletedAtIsNull()
+        .sortByUpdatedAtDesc()
+        .watch(fireImmediately: true);
+  }
+
   Stream<List<Note>> watchNotesInFolder(int folderId) {
     return isar.notes
         .filter()

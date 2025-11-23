@@ -187,7 +187,7 @@ class AvailableSpaceCard extends ConsumerWidget {
         borderRadius: BorderRadius.circular(32.0),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.25),
+            color: Theme.of(context).colorScheme.primary.withAlpha((255 * 0.25).round()),
             blurRadius: 24,
             offset: const Offset(0, 12),
           ),
@@ -212,7 +212,7 @@ class AvailableSpaceCard extends ConsumerWidget {
               height: 200,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.1),
+                color: Colors.white.withAlpha((255 * 0.1).round()),
               ),
             ),
           ),
@@ -224,7 +224,7 @@ class AvailableSpaceCard extends ConsumerWidget {
               height: 140,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.08),
+                color: Colors.white.withAlpha((255 * 0.08).round()),
               ),
             ),
           ),
@@ -246,7 +246,7 @@ class AvailableSpaceCard extends ConsumerWidget {
                             Container(
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.2),
+                                color: Colors.white.withAlpha((255 * 0.2).round()),
                                 borderRadius: BorderRadius.circular(14),
                               ),
                               child: const Icon(Icons.cloud_queue_rounded, color: Colors.white, size: 24),
@@ -259,7 +259,7 @@ class AvailableSpaceCard extends ConsumerWidget {
                                   'Cloud Storage',
                                   style: TextStyle(
                                     fontSize: 14,
-                                    color: Colors.white.withValues(alpha: 0.9),
+                                    color: Colors.white.withAlpha((255 * 0.9).round()),
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
@@ -293,7 +293,7 @@ class AvailableSpaceCard extends ConsumerWidget {
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
-                                color: Colors.white.withValues(alpha: 0.8),
+                                color: Colors.white.withAlpha((255 * 0.8).round()),
                               ),
                             ),
                           ],
@@ -305,7 +305,7 @@ class AvailableSpaceCard extends ConsumerWidget {
                               height: 8,
                               width: double.infinity,
                               decoration: BoxDecoration(
-                                color: Colors.black.withValues(alpha: 0.15),
+                                color: Colors.black.withAlpha((255 * 0.15).round()),
                                 borderRadius: BorderRadius.circular(10),
                               ),
                             ),
@@ -318,7 +318,7 @@ class AvailableSpaceCard extends ConsumerWidget {
                                   borderRadius: BorderRadius.circular(10),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.white.withValues(alpha: 0.4),
+                                      color: Colors.white.withAlpha((255 * 0.4).round()),
                                       blurRadius: 8,
                                     ),
                                   ],
@@ -408,7 +408,7 @@ class _PinnedNoteCard extends StatelessWidget {
       child: Container(
         width: 160, // Width of each card
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+          color: Theme.of(context).colorScheme.surfaceContainerHighest.withAlpha((255 * 0.5).round()),
           borderRadius: BorderRadius.circular(24),
         ),
         padding: const EdgeInsets.all(16),
@@ -464,7 +464,7 @@ class _FolderCardState extends ConsumerState<FolderCard> {
     final notesCountStream = ref.watch(notesInFolderProvider(widget.folder.id));
     
     final style = _folderStyles[widget.folder.name] ??
-        (icon: Icons.folder_outlined, color: Theme.of(context).colorScheme.primary.withValues(alpha: 1.0));
+        (icon: Icons.folder_outlined, color: Theme.of(context).colorScheme.primary);
 
     return GestureDetector(
       onTapDown: (_) => setState(() => _isPressed = true),
@@ -487,7 +487,7 @@ class _FolderCardState extends ConsumerState<FolderCard> {
             borderRadius: BorderRadius.circular(28),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
+                color: Colors.black.withAlpha((255 * 0.03).round()),
                 blurRadius: 16,
                 offset: const Offset(0, 8),
               ),
@@ -500,7 +500,7 @@ class _FolderCardState extends ConsumerState<FolderCard> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: style.color.withValues(alpha: 0.1),
+                  color: style.color.withAlpha((255 * 0.1).round()),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(style.icon, color: style.color, size: 24),

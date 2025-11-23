@@ -8,7 +8,7 @@ class PinnedNotesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final pinnedNotesStream = ref.watch(pinnedNotesProvider);
+    final pinnedNotesStream = ref.watch(pinnedNotesStreamProvider);
 
     return Scaffold(
       appBar: AppBar(

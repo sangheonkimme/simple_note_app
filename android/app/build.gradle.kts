@@ -13,7 +13,7 @@ plugins {
 }
 
 val keyProperties = Properties()
-val keyPropertiesFile = rootProject.file("key.properties") // Corrected path
+val keyPropertiesFile = rootProject.file("android/key.properties")
 if (keyPropertiesFile.exists()) {
     keyProperties.load(FileInputStream(keyPropertiesFile))
 }
@@ -33,11 +33,17 @@ android {
     }
 
     signingConfigs {
-        create("release") {
-            keyAlias = keyProperties["keyAlias"] as String?
-            keyPassword = keyProperties["keyPassword"] as String?
-            storeFile = if (keyProperties["storeFile"] != null) rootProject.file(keyProperties["storeFile"] as String) else null
-            storePassword = keyProperties["storePassword"] as String?
+        if (keyPropertiesFile.exists() && 
+            keyProperties["keyAlias"] != null && 
+            keyProperties["keyPassword"] != null && 
+            keyProperties["storeFile"] != null && 
+            keyProperties["storePassword"] != null) {
+            create("release") {
+                keyAlias = keyProperties["keyAlias"] as String
+                keyPassword = keyProperties["keyPassword"] as String
+                storeFile = rootProject.file(keyProperties["storeFile"] as String)
+                storePassword = keyProperties["storePassword"] as String
+            }
         }
     }
 
@@ -51,7 +57,10 @@ android {
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("release")
+            // Only apply signing config if it was created
+            if (signingConfigs.findByName("release") != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
 }

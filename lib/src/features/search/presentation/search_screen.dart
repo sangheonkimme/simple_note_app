@@ -12,7 +12,7 @@ class SearchScreen extends ConsumerWidget {
     final searchQuery = ref.watch(searchQueryProvider);
     final searchResults = ref.watch(searchResultProvider);
 
-    final suggestionChips = ['회의록', '아이디어', '태그:업무', '체크리스트'];
+    final suggestionChips = ['회의록', '아이디어', '체크리스트'];
 
     return Scaffold(
       appBar: AppBar(
@@ -27,7 +27,7 @@ class SearchScreen extends ConsumerWidget {
               child: TextField(
                 autofocus: true,
                 decoration: InputDecoration(
-                  hintText: '제목, 내용, 태그로 검색',
+                  hintText: '제목 또는 내용으로 검색',
                   prefixIcon: const Icon(Icons.search),
                   suffixIcon: searchQuery.isNotEmpty
                       ? IconButton(
@@ -83,7 +83,7 @@ class SearchScreen extends ConsumerWidget {
                   if (searchQuery.isEmpty) {
                     return const EmptyStateWidget(
                       icon: Icons.search_outlined,
-                      message: '노트의 제목, 내용 또는\n태그를 검색하여 노트를 찾아보세요.',
+                      message: '노트의 제목 또는 내용으로\n노트를 검색해 보세요.',
                     );
                   }
                   if (notes.isEmpty) {

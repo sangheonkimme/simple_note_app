@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novita/src/data/providers.dart';
+import 'package:novita/src/features/board/presentation/board_screen.dart';
 import 'package:novita/src/features/notes/presentation/note_editor_screen.dart';
 import 'package:novita/src/features/search/presentation/search_screen.dart';
 import 'package:novita/src/features/settings/presentation/settings_screen.dart';
 import 'package:novita/src/features/notes/presentation/home_screen.dart';
-// import 'package:novita/src/features/calendar/presentation/calendar_screen.dart';
 
 class MainScaffold extends ConsumerStatefulWidget {
   const MainScaffold({super.key});
@@ -19,20 +19,19 @@ class MainScaffold extends ConsumerStatefulWidget {
 class _MainScaffoldState extends ConsumerState<MainScaffold> {
   int _selectedIndex = 0;
 
+  // Screens displayed for each tab
   static final List<Widget> _widgetOptions = <Widget>[
     const HomeScreen(),
     const SearchScreen(),
-    const SizedBox.shrink(), // Placeholder for FAB gap
-    // const CalendarScreen(),
-    const Scaffold(body: Center(child: Text('Coming Soon'))),
-    const SettingsScreen(), // Use the new SettingsScreen
+    const BoardScreen(),
+    const SettingsScreen(),
   ];
 
-  // Screen names for analytics
+  // Screen names for analytics, matching the order of destinations
   static const List<String> _screenNames = <String>[
     'Home',
     'Search',
-    'Calendar',
+    'Board',
     'Settings',
   ];
 
@@ -40,24 +39,24 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
   void initState() {
     super.initState();
     FlutterNativeSplash.remove();
-    // Log initial screen view
     ref.read(analyticsServiceProvider).logScreenView(_screenNames[0]);
   }
 
   void _onItemTapped(int index) {
-    if (_selectedIndex == index) return; // Avoid logging for the same screen
+    // The NavigationBar has 4 destinations, so the index will be 0, 1, 2, or 3.
+    if (_selectedIndex == index) return;
 
     setState(() {
       _selectedIndex = index;
     });
 
-    // Log screen view event
     ref.read(analyticsServiceProvider).logScreenView(_screenNames[index]);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // Use IndexedStack to keep the state of each screen
       body: IndexedStack(
         index: _selectedIndex,
         children: _widgetOptions,
@@ -65,7 +64,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
       floatingActionButton: Container(
         height: 72,
         width: 72,
-        margin: const EdgeInsets.only(bottom: 20), // Adjust for custom nav bar height
+        margin: const EdgeInsets.only(bottom: 20),
         child: DecoratedBox(
           decoration: BoxDecoration(
             shape: BoxShape.circle,
@@ -79,7 +78,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
             ),
             boxShadow: [
               BoxShadow(
-                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
+                color: Theme.of(context).colorScheme.primary.withAlpha((255 * 0.4).round()),
                 blurRadius: 24,
                 offset: const Offset(0, 12),
               ),
@@ -105,7 +104,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
           borderRadius: BorderRadius.circular(32),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
+              color: Colors.black.withAlpha((255 * 0.08).round()),
               blurRadius: 30,
               offset: const Offset(0, 10),
             ),
@@ -115,44 +114,71 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
           borderRadius: BorderRadius.circular(32),
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: NavigationBar(
-              height: 76,
+            // A custom implementation to handle the FAB gap
+            child: _CustomNavBar(
               selectedIndex: _selectedIndex,
-              onDestinationSelected: _onItemTapped,
-              destinations: [
-                NavigationDestination(
-                  icon: Icon(Icons.home_outlined,
-                      color: Theme.of(context).iconTheme.color?.withValues(alpha: 0.6)),
-                  selectedIcon: const Icon(Icons.home_rounded, color: Color(0xFF6C4CF5)),
-                  label: 'Home',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.search_outlined,
-                      color: Theme.of(context).iconTheme.color?.withValues(alpha: 0.6)),
-                  selectedIcon: const Icon(Icons.search_rounded, color: Color(0xFF6C4CF5)),
-                  label: 'Search',
-                ),
-                const SizedBox(width: 48), // Space for FAB
-                NavigationDestination(
-                  icon: Icon(Icons.calendar_today_outlined,
-                      color: Theme.of(context).iconTheme.color?.withValues(alpha: 0.6)),
-                  selectedIcon:
-                      const Icon(Icons.calendar_today_rounded, color: Color(0xFF6C4CF5)),
-                  label: 'Calendar',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.settings_outlined,
-                      color: Theme.of(context).iconTheme.color?.withValues(alpha: 0.6)),
-                  selectedIcon:
-                      const Icon(Icons.settings_rounded, color: Color(0xFF6C4CF5)),
-                  label: 'Settings',
-                ),
-              ],
-              backgroundColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0.85),
-              elevation: 0,
+              onItemTapped: _onItemTapped,
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+// Custom Navigation Bar to handle the gap for the FAB
+class _CustomNavBar extends StatelessWidget {
+  const _CustomNavBar({required this.selectedIndex, required this.onItemTapped});
+
+  final int selectedIndex;
+  final ValueChanged<int> onItemTapped;
+
+  @override
+  Widget build(BuildContext context) {
+    final destinations = <({IconData icon, IconData selectedIcon, String label})>[
+      (icon: Icons.home_outlined, selectedIcon: Icons.home_rounded, label: 'Home'),
+      (icon: Icons.search_outlined, selectedIcon: Icons.search_rounded, label: 'Search'),
+      (icon: Icons.dashboard_outlined, selectedIcon: Icons.dashboard_rounded, label: 'Board'),
+      (icon: Icons.settings_outlined, selectedIcon: Icons.settings_rounded, label: 'Settings'),
+    ];
+
+    return Container(
+      color: Theme.of(context).colorScheme.surface.withAlpha((255 * 0.85).round()),
+      height: 76,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: List.generate(destinations.length + 1, (index) {
+          if (index == 2) {
+            // This is the empty space for the FAB
+            return const SizedBox(width: 48);
+          }
+          final itemIndex = index < 2 ? index : index - 1;
+          final item = destinations[itemIndex];
+          final isSelected = selectedIndex == itemIndex;
+          return Expanded(
+            child: InkWell(
+              onTap: () => onItemTapped(itemIndex),
+              borderRadius: BorderRadius.circular(20),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    isSelected ? item.selectedIcon : item.icon,
+                    color: isSelected ? const Color(0xFF6C4CF5) : Theme.of(context).iconTheme.color?.withAlpha((255 * 0.6).round()),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    item.label,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          color: isSelected ? const Color(0xFF6C4CF5) : Theme.of(context).textTheme.bodySmall?.color?.withAlpha((255 * 0.8).round()),
+                        ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }),
       ),
     );
   }

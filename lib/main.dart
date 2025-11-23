@@ -7,6 +7,7 @@ import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:novita/firebase_options.dart';
 import 'package:novita/src/data/datasources/local/isar_service.dart';
 import 'package:novita/src/data/providers.dart';
+import 'package:novita/src/data/repositories/folder_repository.dart';
 import 'package:novita/src/features/common/presentation/app_theme.dart';
 import 'package:novita/src/features/scaffold/main_scaffold.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
@@ -29,16 +30,13 @@ Future<void> main() async {
     return true;
   };
 
-
+  // Initialize local database
   final isarService = IsarService();
   final isar = await isarService.db;
 
-  final container = ProviderContainer(overrides: [
-    isarProvider.overrideWithValue(isar),
-  ]);
-
-  await container.read(folderRepositoryProvider).createDefaultFolders();
-  container.dispose();
+  // Create default folders directly before running the app
+  final folderRepository = FolderRepository(isar);
+  await folderRepository.createDefaultFolders();
 
   runApp(
     ProviderScope(

@@ -24,6 +24,7 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
   late final TextEditingController _titleController;
   late final TextEditingController _bodyController;
   late NoteType _noteType;
+  late bool _isPinned;
   late List<ChecklistItem> _checklistItems;
   Folder? _selectedFolder;
 
@@ -39,11 +40,11 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
     _titleController = TextEditingController(text: widget.note?.title ?? '');
     _bodyController = TextEditingController(text: widget.note?.body ?? '');
     _noteType = widget.note?.type ?? widget.initialNoteType;
+    _isPinned = widget.note?.pinned ?? false;
     _checklistItems = widget.note?.checklistItems.map((item) => ChecklistItem()..text = item.text..done = item.done).toList() ?? [];
     _existingAttachments.addAll(widget.note?.attachments ?? []);
     _selectedFolder = widget.folder ?? widget.note?.folder.value;
     
-    // If no folder is selected, try to find "기타" folder or default to first available
     if (_selectedFolder == null) {
       _loadDefaultFolder();
     }
@@ -53,7 +54,6 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
     final folders = await ref.read(folderRepositoryProvider).watchAllFolders().first;
     if (mounted) {
       setState(() {
-        // Try to find '기타' (Misc) folder, otherwise use the first one
         _selectedFolder = folders.cast<Folder?>().firstWhere(
           (f) => f?.name == '기타',
           orElse: () => folders.isNotEmpty ? folders.first : null,
@@ -95,6 +95,7 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
 
     noteToSave.title = title;
     noteToSave.type = _noteType;
+    noteToSave.pinned = _isPinned;
     if (_noteType == NoteType.text) {
       noteToSave.body = body;
     } else {
@@ -105,7 +106,6 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
 
     noteToSave.updatedAt = DateTime.now();
     
-    // Use selected folder
     final folder = _selectedFolder;
 
     noteRepository.saveNote(
@@ -114,8 +114,7 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
       _deletedAttachments,
       folder: _selectedFolder
     ).then((_) {
-       // Log note creation event
-      if (widget.note == null) { // Only log for new notes
+      if (widget.note == null) {
         ref.read(analyticsServiceProvider).logNoteCreated(
           folder: folder?.name ?? 'Uncategorized',
           hasImage: (_existingAttachments.isNotEmpty || _newAttachments.isNotEmpty),
@@ -181,17 +180,20 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
           ),
           const SizedBox(width: 8),
           IconButton(
-            tooltip: widget.note?.pinned == true ? '고정 해제' : '고정',
-            onPressed: widget.note == null ? null : () async {
-              await ref.read(noteRepositoryProvider).togglePinStatus(widget.note!.id);
-              if (mounted) {
-                setState(() {
-                  // Trigger rebuild to update icon
-                });
+            tooltip: _isPinned ? '고정 해제' : '고정',
+            onPressed: () {
+              // For an existing note, also update the database immediately
+              if (widget.note != null) {
+                ref.read(noteRepositoryProvider).togglePinStatus(widget.note!.id);
               }
+              // For both new and existing notes, update the local UI state
+              setState(() {
+                _isPinned = !_isPinned;
+              });
             },
             icon: Icon(
-              widget.note?.pinned == true ? Icons.push_pin : Icons.push_pin_outlined,
+              _isPinned ? Icons.push_pin : Icons.push_pin_outlined,
+              color: _isPinned ? Theme.of(context).colorScheme.primary : null,
             ),
           ),
           const SizedBox(width: 8),
@@ -208,7 +210,6 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
           child: Column(
             children: [
-              // Folder Selector
               _FolderSelector(
                 selectedFolder: _selectedFolder,
                 onFolderSelected: (folder) => setState(() => _selectedFolder = folder),

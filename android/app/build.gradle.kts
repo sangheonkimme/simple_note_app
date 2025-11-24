@@ -13,7 +13,7 @@ plugins {
 }
 
 val keyProperties = Properties()
-val keyPropertiesFile = rootProject.file("android/key.properties")
+val keyPropertiesFile = rootProject.file("key.properties")
 if (keyPropertiesFile.exists()) {
     keyProperties.load(FileInputStream(keyPropertiesFile))
 }
@@ -41,7 +41,7 @@ android {
             create("release") {
                 keyAlias = keyProperties["keyAlias"] as String
                 keyPassword = keyProperties["keyPassword"] as String
-                storeFile = rootProject.file(keyProperties["storeFile"] as String)
+                storeFile = file(keyProperties["storeFile"] as String)
                 storePassword = keyProperties["storePassword"] as String
             }
         }

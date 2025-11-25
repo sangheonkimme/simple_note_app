@@ -6,6 +6,7 @@ import 'package:novita/src/features/common/presentation/empty_state_widget.dart'
 import 'package:novita/src/features/common/presentation/note_card.dart';
 import 'package:novita/src/features/notes/presentation/note_editor_screen.dart';
 import 'package:novita/src/features/search/presentation/search_screen.dart';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 
 class FolderNotesScreen extends ConsumerWidget {
   const FolderNotesScreen({
@@ -56,14 +57,11 @@ class FolderNotesScreen extends ConsumerWidget {
               ),
             );
           }
-          return GridView.builder(
+          return MasonryGridView.count(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 16.0,
-              mainAxisSpacing: 16.0,
-              childAspectRatio: 0.82,
-            ),
+            crossAxisCount: 2,
+            mainAxisSpacing: 16.0,
+            crossAxisSpacing: 16.0,
             itemCount: notes.length + 1, // +1 for the "New note" card
             itemBuilder: (context, index) {
               if (index == 0) {
@@ -97,6 +95,7 @@ class NewNoteCard extends StatelessWidget {
       },
       borderRadius: BorderRadius.circular(16.0),
       child: Container(
+        height: 200, // Fixed height for Masonry layout
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(26.0),
           gradient: LinearGradient(

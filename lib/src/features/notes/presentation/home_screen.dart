@@ -5,6 +5,7 @@ import 'package:novita/src/data/models/note.dart';
 import 'package:novita/src/data/providers.dart';
 import 'package:novita/src/features/notes/presentation/folder_notes_screen.dart';
 import 'package:novita/src/features/notes/presentation/note_editor_screen.dart';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -63,14 +64,11 @@ class HomeScreen extends ConsumerWidget {
                 ),
                 SliverPadding(
                   padding: const EdgeInsets.fromLTRB(24, 0, 24, 100),
-                  sliver: SliverGrid.builder(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 16.0,
-                      mainAxisSpacing: 16.0,
-                      childAspectRatio: 0.85,
-                    ),
-                    itemCount: folders.length,
+                  sliver: SliverMasonryGrid.count(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 16.0,
+                    crossAxisSpacing: 16.0,
+                    childCount: folders.length,
                     itemBuilder: (context, index) {
                       final folder = folders[index];
                       return FolderCard(folder: folder);
@@ -505,7 +503,7 @@ class _FolderCardState extends ConsumerState<FolderCard> {
                 ),
                 child: Icon(style.icon, color: style.color, size: 24),
               ),
-              const Spacer(),
+              const SizedBox(height: 40), // Fixed height instead of Spacer for Masonry layout
               Text(
                 widget.folder.name,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(

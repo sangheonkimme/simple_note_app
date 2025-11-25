@@ -56,15 +56,20 @@ class NoteCard extends ConsumerWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _NoteTypeChip(
-                  isChecklist: note.type == NoteType.checklist,
-                  accent: palette.$1,
+                Expanded( // Use Expanded to force the chip to take only available space
+                  child: _NoteTypeChip(
+                    isChecklist: note.type == NoteType.checklist,
+                    accent: palette.$1,
+                  ),
                 ),
+                const SizedBox(width: 8),
+                // Icons row stays as is, but now the chip will shrink/truncate if needed
                 Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (hasAttachments)
+                    if (hasAttachments) ...[
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), // Reduced padding
                         decoration: BoxDecoration(
                           color: palette.$1.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(18),
@@ -84,7 +89,8 @@ class NoteCard extends ConsumerWidget {
                           ],
                         ),
                       ),
-                    const SizedBox(width: 8),
+                      const SizedBox(width: 4), // Reduced spacing
+                    ],
                     GestureDetector(
                       onTap: () async {
                         await ref.read(noteRepositoryProvider).togglePinStatus(note.id);
@@ -110,19 +116,58 @@ class NoteCard extends ConsumerWidget {
               overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 8),
-            Expanded(
-              child: Text(
-                note.type == NoteType.checklist
-                    ? note.checklistItems.map((e) => '• ${e.text}').join('\n')
-                    : note.body ?? '',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey.shade700,
-                      height: 1.4,
-                    ),
-                maxLines: hasAttachments ? 3 : 6,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
+            // Removed Expanded to allow intrinsic height for Masonry layout
+            note.type == NoteType.checklist
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: note.checklistItems.take(4).map((item) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 4.0),
+                        child: Row(
+                          children: [
+                            Icon(
+                              item.done
+                                  ? Icons.check_box_rounded
+                                  : Icons.check_box_outline_blank_rounded,
+                              size: 16,
+                              color: item.done
+                                  ? palette.$1.darken()
+                                  : Colors.grey.shade400,
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                item.text,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      color: item.done
+                                          ? Colors.grey.shade400
+                                          : Colors.grey.shade700,
+                                      decoration: item.done
+                                          ? TextDecoration.lineThrough
+                                          : null,
+                                      height: 1.2,
+                                    ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  )
+                : Text(
+                    note.body ?? '',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Colors.grey.shade700,
+                          height: 1.4,
+                        ),
+                    maxLines: hasAttachments ? 3 : 6,
+                    overflow: TextOverflow.ellipsis,
+                  ),
             if (hasAttachments) ...[
               const SizedBox(height: 12),
               ClipRRect(
@@ -177,12 +222,15 @@ class _NoteTypeChip extends StatelessWidget {
             color: accent.darken(),
           ),
           const SizedBox(width: 6),
-          Text(
-            isChecklist ? '체크리스트' : '텍스트',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: accent.darken(),
+          Flexible(
+            child: Text(
+              isChecklist ? '체크리스트' : '텍스트',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: accent.darken(),
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

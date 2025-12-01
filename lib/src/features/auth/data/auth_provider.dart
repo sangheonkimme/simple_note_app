@@ -1,15 +1,16 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novita/src/features/auth/data/auth_repository.dart';
+import 'package:novita/src/features/auth/domain/user_model.dart';
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return MockAuthRepository();
 });
 
-final authStateProvider = StateNotifierProvider<AuthController, AsyncValue<bool>>((ref) {
+final authStateProvider = StateNotifierProvider<AuthController, AsyncValue<User?>>((ref) {
   return AuthController(ref.watch(authRepositoryProvider));
 });
 
-class AuthController extends StateNotifier<AsyncValue<bool>> {
+class AuthController extends StateNotifier<AsyncValue<User?>> {
   final AuthRepository _repository;
 
   AuthController(this._repository) : super(const AsyncValue.loading()) {
@@ -19,8 +20,8 @@ class AuthController extends StateNotifier<AsyncValue<bool>> {
   Future<void> checkAuth() async {
     state = const AsyncValue.loading();
     try {
-      final isLoggedIn = await _repository.checkAuth();
-      state = AsyncValue.data(isLoggedIn);
+      final user = await _repository.checkAuth();
+      state = AsyncValue.data(user);
     } catch (e, st) {
       state = AsyncValue.error(e, st);
     }
@@ -30,7 +31,7 @@ class AuthController extends StateNotifier<AsyncValue<bool>> {
     state = const AsyncValue.loading();
     try {
       await _repository.login(email, password);
-      state = const AsyncValue.data(true);
+      await checkAuth();
     } catch (e, st) {
       state = AsyncValue.error(e, st);
     }
@@ -40,7 +41,7 @@ class AuthController extends StateNotifier<AsyncValue<bool>> {
     state = const AsyncValue.loading();
     try {
       await _repository.register(email, password, nickname);
-      state = const AsyncValue.data(true);
+      await checkAuth();
     } catch (e, st) {
       state = AsyncValue.error(e, st);
     }
@@ -50,9 +51,7 @@ class AuthController extends StateNotifier<AsyncValue<bool>> {
     state = const AsyncValue.loading();
     try {
       await _repository.googleLogin();
-      // Check auth again to verify token was saved
-      final isLoggedIn = await _repository.checkAuth();
-      state = AsyncValue.data(isLoggedIn);
+      await checkAuth();
     } catch (e, st) {
       state = AsyncValue.error(e, st);
     }
@@ -62,7 +61,7 @@ class AuthController extends StateNotifier<AsyncValue<bool>> {
     state = const AsyncValue.loading();
     try {
       await _repository.logout();
-      state = const AsyncValue.data(false);
+      state = const AsyncValue.data(null);
     } catch (e, st) {
       state = AsyncValue.error(e, st);
     }
@@ -72,7 +71,10 @@ class AuthController extends StateNotifier<AsyncValue<bool>> {
     state = const AsyncValue.loading();
     try {
       await _repository.loginAsGuest();
-      state = const AsyncValue.data(true);
+      // Guest is treated as null user for now, or we can create a guest user object
+      // If we want to navigate to Home, we just need to stop loading.
+      // But since Home is always visible, this just updates the state.
+      state = const AsyncValue.data(null); 
     } catch (e, st) {
       state = AsyncValue.error(e, st);
     }

@@ -12,7 +12,6 @@ import 'package:novita/src/features/common/presentation/app_theme.dart';
 import 'package:novita/src/features/scaffold/main_scaffold.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:novita/src/features/auth/data/auth_provider.dart';
-import 'package:novita/src/features/auth/presentation/auth_screen.dart';
 
 Future<void> main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
@@ -66,11 +65,7 @@ class MyApp extends ConsumerWidget {
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: ThemeMode.system,
-      home: authState.when(
-        data: (isLoggedIn) => isLoggedIn ? const MainScaffold() : const AuthScreen(),
-        error: (err, stack) => const AuthScreen(), // Fallback to auth screen on error
-        loading: () => const SizedBox.shrink(), // Keep splash screen or show loader
-      ),
+      home: const MainScaffold(),
     );
   }
 }

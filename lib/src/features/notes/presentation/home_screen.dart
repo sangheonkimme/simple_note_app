@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novita/src/data/models/folder.dart';
 import 'package:novita/src/data/models/note.dart';
 import 'package:novita/src/data/providers.dart';
+import 'package:novita/src/features/auth/presentation/auth_screen.dart';
+import 'package:novita/src/features/auth/data/auth_provider.dart';
 import 'package:novita/src/features/notes/presentation/folder_notes_screen.dart';
 import 'package:novita/src/features/notes/presentation/note_editor_screen.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
@@ -123,11 +125,15 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
-class _HomeHeader extends StatelessWidget {
+class _HomeHeader extends ConsumerWidget {
   const _HomeHeader();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authStateProvider);
+    final user = authState.value;
+    final isLoggedIn = user != null;
+
     return Row(
       children: [
         Expanded(
@@ -161,10 +167,60 @@ class _HomeHeader extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 12),
-        CircleAvatar(
-          radius: 24,
-          backgroundImage: const NetworkImage('https://i.pravatar.cc/150?img=68'),
-          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+        GestureDetector(
+          onTap: () {
+            if (isLoggedIn) {
+              // Show user info and sign out option
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('User Profile'),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Email: ${user.email ?? "Guest"}'),
+                      if (user.displayName != null)
+                        Text('Name: ${user.displayName}'),
+                    ],
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Close'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        ref.read(authStateProvider.notifier).logout();
+                        Navigator.pop(context);
+                      },
+                      style: TextButton.styleFrom(foregroundColor: Colors.red),
+                      child: const Text('Sign Out'),
+                    ),
+                  ],
+                ),
+              );
+            } else {
+              // Navigate to Auth Screen
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const AuthScreen()),
+              );
+            }
+          },
+          child: CircleAvatar(
+            radius: 24,
+            backgroundImage: isLoggedIn && user.photoURL != null
+                ? NetworkImage(user.photoURL!)
+                : null,
+            backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+            child: isLoggedIn && user.photoURL != null
+                ? null
+                : Icon(
+                    Icons.person_outline,
+                    color: Theme.of(context).colorScheme.onPrimaryContainer,
+                  ),
+          ),
         ),
       ],
     );

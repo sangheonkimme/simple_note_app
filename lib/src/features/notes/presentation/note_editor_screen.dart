@@ -370,7 +370,7 @@ class _AttachmentEditor extends StatelessWidget {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: allAttachments.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        separatorBuilder: (_, i) => const SizedBox(width: 12),
         itemBuilder: (context, index) {
           final attachment = allAttachments[index];
           return Stack(
@@ -553,7 +553,7 @@ class _FolderSelector extends ConsumerWidget {
         );
       },
       loading: () => const SizedBox.shrink(),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (e, _) => const SizedBox.shrink(),
     );
   }
 }

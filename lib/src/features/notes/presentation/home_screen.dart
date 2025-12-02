@@ -298,7 +298,7 @@ class _AvailableSpaceCard extends ConsumerWidget {
               data: (info) => _buildStorageContent(context, info),
               loading: () =>
                   const Center(child: CircularProgressIndicator(color: Colors.white)),
-              error: (_, __) =>
+              error: (e, _) =>
                   const Text('Unavailable', style: TextStyle(color: Colors.white)),
             ),
           ),
@@ -592,7 +592,7 @@ class _FolderCardState extends ConsumerState<_FolderCard> {
                       ),
                 ),
                 loading: () => const SizedBox(height: 14),
-                error: (_, __) => const SizedBox(height: 14),
+                error: (e, _) => const SizedBox(height: 14),
               ),
             ],
           ),

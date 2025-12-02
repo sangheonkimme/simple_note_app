@@ -87,7 +87,7 @@ class SettingsScreen extends ConsumerWidget {
                     '${info.usedSpaceGB.toStringAsFixed(2)} GB / ${info.totalSpaceGB.toStringAsFixed(0)} GB 사용 중',
                   ),
                   loading: () => const Text('로딩 중...'),
-                  error: (_, __) => const Text('정보를 불러올 수 없습니다'),
+                  error: (e, _) => const Text('정보를 불러올 수 없습니다'),
                 );
               },
             ),

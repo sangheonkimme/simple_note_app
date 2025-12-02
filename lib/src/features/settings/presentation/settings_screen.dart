@@ -2,98 +2,181 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novita/src/data/providers.dart';
 import 'package:novita/src/features/auth/data/auth_provider.dart';
-import 'package:package_info_plus/package_info_plus.dart';
+import 'package:novita/src/features/auth/presentation/auth_screen.dart';
 
-class SettingsScreen extends ConsumerStatefulWidget {
+class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   @override
-  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authStateProvider);
+    final user = authState.whenData((u) => u).value;
+    final isLoggedIn = user != null;
 
-class _SettingsScreenState extends ConsumerState<SettingsScreen> {
-  Future<PackageInfo>? _packageInfoFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    _packageInfoFuture = PackageInfo.fromPlatform();
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('설정'),
       ),
-      body: FutureBuilder<PackageInfo>(
-        future: _packageInfoFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return const Center(child: Text('정보를 불러올 수 없습니다.'));
-          }
-
-          final packageInfo = snapshot.data!;
-          final appName = packageInfo.appName;
-          final version = packageInfo.version;
-          final buildNumber = packageInfo.buildNumber;
-
-          return ListView(
-            children: [
-              const SizedBox(height: 20),
-              Center(
-                child: Column(
+      body: ListView(
+        children: [
+          // Profile Section
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
                   children: [
-                    // Placeholder for App Icon
-                    const Icon(Icons.note_alt_rounded, size: 80),
-                    const SizedBox(height: 16),
-                    Text(appName, style: Theme.of(context).textTheme.headlineSmall),
+                    CircleAvatar(
+                      radius: 30,
+                      backgroundImage: isLoggedIn && user.picture != null
+                          ? NetworkImage(user.picture!)
+                          : null,
+                      child: isLoggedIn && user.picture != null
+                          ? null
+                          : const Icon(Icons.person, size: 30),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            isLoggedIn ? user.name : 'Guest',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                          if (isLoggedIn)
+                            Text(
+                              user.email,
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Colors.grey,
+                                  ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    if (!isLoggedIn)
+                      FilledButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const AuthScreen()),
+                          );
+                        },
+                        child: const Text('로그인'),
+                      ),
                   ],
                 ),
               ),
-              const SizedBox(height: 30),
-              ListTile(
-                title: const Text('버전 정보'),
-                subtitle: Text('$version ($buildNumber)'),
-              ),
-              const Divider(),
-              ListTile(
-                leading: const Icon(Icons.sync),
-                title: const Text('지금 동기화'),
-                onTap: () async {
-                  final syncService = ref.read(syncServiceProvider);
-                  await syncService.sync();
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('동기화가 완료되었습니다.')),
-                    );
+            ),
+          ),
+
+          const Divider(),
+
+          // Storage Section
+          ListTile(
+            leading: const Icon(Icons.cloud_outlined),
+            title: const Text('저장 공간'),
+            subtitle: Consumer(
+              builder: (context, ref, child) {
+                final storageInfo = ref.watch(storageInfoProvider);
+                return storageInfo.when(
+                  data: (info) => Text(
+                    '${info.usedSpaceGB.toStringAsFixed(2)} GB / ${info.totalSpaceGB.toStringAsFixed(0)} GB 사용 중',
+                  ),
+                  loading: () => const Text('로딩 중...'),
+                  error: (_, __) => const Text('정보를 불러올 수 없습니다'),
+                );
+              },
+            ),
+          ),
+
+          // Sync Section
+          if (isLoggedIn)
+            ListTile(
+              leading: const Icon(Icons.sync_outlined),
+              title: const Text('동기화'),
+              subtitle: const Text('마지막 동기화: 방금 전'),
+              trailing: IconButton(
+                icon: const Icon(Icons.refresh),
+                onPressed: () async {
+                  try {
+                    await ref.read(syncServiceProvider).sync();
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('동기화 완료')),
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('동기화 실패: $e')),
+                      );
+                    }
                   }
                 },
               ),
-              const Divider(),
-              FutureBuilder<bool>(
-                future: ref.read(authRepositoryProvider).isGuest(),
-                builder: (context, snapshot) {
-                  final isGuest = snapshot.data ?? false;
-                  return ListTile(
-                    leading: Icon(isGuest ? Icons.login : Icons.logout, color: isGuest ? Colors.blue : Colors.red),
-                    title: Text(
-                      isGuest ? '로그인 / 회원가입' : '로그아웃',
-                      style: TextStyle(color: isGuest ? Colors.blue : Colors.red),
-                    ),
-                    onTap: () async {
-                      await ref.read(authStateProvider.notifier).logout();
-                      // Navigation to AuthScreen is handled by main.dart's authState listener
-                    },
-                  );
-                },
-              ),
-            ],
-          );
-        },
+            ),
+
+          const Divider(),
+
+          // App Info Section
+          ListTile(
+            leading: const Icon(Icons.info_outlined),
+            title: const Text('앱 정보'),
+            subtitle: const Text('버전 1.0.0'),
+          ),
+
+          ListTile(
+            leading: const Icon(Icons.help_outline),
+            title: const Text('도움말'),
+            onTap: () {
+              // TODO: Open help page
+            },
+          ),
+
+          ListTile(
+            leading: const Icon(Icons.privacy_tip_outlined),
+            title: const Text('개인정보 처리방침'),
+            onTap: () {
+              // TODO: Open privacy policy
+            },
+          ),
+
+          const Divider(),
+
+          // Logout Section
+          if (isLoggedIn)
+            ListTile(
+              leading: const Icon(Icons.logout, color: Colors.red),
+              title: const Text('로그아웃', style: TextStyle(color: Colors.red)),
+              onTap: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('로그아웃'),
+                    content: const Text('정말 로그아웃 하시겠습니까?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('취소'),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          ref.read(authStateProvider.notifier).logout();
+                          Navigator.pop(context);
+                        },
+                        style: TextButton.styleFrom(foregroundColor: Colors.red),
+                        child: const Text('로그아웃'),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+        ],
       ),
     );
   }

@@ -1,38 +1,62 @@
-import 'package:flutter/foundation.dart';
 import 'package:novita/src/data/models/note.dart';
 import 'package:novita/src/data/models/folder.dart';
 
 abstract class SyncRepository {
-  Future<List<Note>> pullNotes(DateTime? lastSyncedAt);
-  Future<List<Folder>> pullFolders(DateTime? lastSyncedAt);
+  /// Get changes from server since the given timestamp
+  Future<SyncResult> getChangesSince({
+    required String since,
+    int limit = 200,
+  });
 
-  Future<void> pushNotes(List<Note> notes);
-  Future<void> pushFolders(List<Folder> folders);
+  /// Get latest timestamp from server
+  Future<String?> getLatestTimestamp();
+
+  /// Folder operations
+  Future<Folder> createFolder(Folder folder);
+  Future<Folder> updateFolder(Folder folder);
+  Future<void> deleteFolder(String remoteId);
+
+  /// Note operations
+  Future<Note> createNote(Note note);
+  Future<Note> updateNote(Note note);
+  Future<void> deleteNote(String remoteId);
 }
 
-class MockSyncRepository implements SyncRepository {
-  @override
-  Future<List<Note>> pullNotes(DateTime? lastSyncedAt) async {
-    await Future.delayed(const Duration(seconds: 1));
-    return [];
-  }
+/// Sync result from server
+class SyncResult {
+  final List<Note> notes;
+  final List<String> deletedNoteIds;
+  final List<Folder> folders;
+  final List<String> deletedFolderIds;
+  final String? lastSyncedAt;
 
-  @override
-  Future<List<Folder>> pullFolders(DateTime? lastSyncedAt) async {
-    await Future.delayed(const Duration(seconds: 1));
-    return [];
-  }
+  const SyncResult({
+    required this.notes,
+    required this.deletedNoteIds,
+    required this.folders,
+    required this.deletedFolderIds,
+    this.lastSyncedAt,
+  });
 
-  @override
-  Future<void> pushNotes(List<Note> notes) async {
-    await Future.delayed(const Duration(seconds: 1));
-    debugPrint('Pushed ${notes.length} notes');
-  }
-
-  @override
-  Future<void> pushFolders(List<Folder> folders) async {
-    await Future.delayed(const Duration(seconds: 1));
-    debugPrint('Pushed ${folders.length} folders');
+  factory SyncResult.fromJson(Map<String, dynamic> json) {
+    return SyncResult(
+      notes: (json['notes'] as List<dynamic>?)
+              ?.map((e) => Note.fromServerJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+      deletedNoteIds: (json['deletedNoteIds'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          [],
+      folders: (json['folders'] as List<dynamic>?)
+              ?.map((e) => Folder.fromServerJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+      deletedFolderIds: (json['deletedFolderIds'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          [],
+      lastSyncedAt: json['lastSyncedAt'] as String?,
+    );
   }
 }
-

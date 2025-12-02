@@ -19,7 +19,7 @@ if (keyPropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.railit.novita" // Update namespace
+    namespace = "com.railit.novita"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -33,10 +33,10 @@ android {
     }
 
     signingConfigs {
-        if (keyPropertiesFile.exists() && 
-            keyProperties["keyAlias"] != null && 
-            keyProperties["keyPassword"] != null && 
-            keyProperties["storeFile"] != null && 
+        if (keyPropertiesFile.exists() &&
+            keyProperties["keyAlias"] != null &&
+            keyProperties["keyPassword"] != null &&
+            keyProperties["storeFile"] != null &&
             keyProperties["storePassword"] != null) {
             create("release") {
                 keyAlias = keyProperties["keyAlias"] as String

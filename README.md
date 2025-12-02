@@ -1,61 +1,66 @@
 # Novita
 
-A simple, modern note-taking application built with Flutter.
+클라우드 동기화를 지원하는 Flutter 노트 앱입니다.
 
-## ✨ Features
+## 주요 기능
 
-- **📝 Rich Note Editor**: Create notes with text or interactive checklists.
-- **📂 Organize Your Way**: Group notes into folders for easy categorization.
-- **🖼️ Image Attachments**: Add images to your notes from the gallery or camera.
-- **🔍 Powerful Search**: Quickly find notes by searching titles or content.
-- **🎨 Modern UI**: Includes a dark mode for comfortable viewing in low-light conditions.
-- **📊 Analytics & Monitoring**: Integrated with Firebase Analytics and Crashlytics.
+- **노트 작성 및 관리**: 폴더별로 노트를 구성하고 관리
+- **검색**: 노트 내용 검색
+- **클라우드 동기화**: Google 로그인을 통한 클라우드 동기화
+- **오프라인 지원**: 인터넷 연결 없이도 사용 가능
 
-## 🚀 Tech Stack
+## 기술 스택
 
-- **Framework**: Flutter
-- **State Management**: Riverpod
-- **Local Database**: Isar
-- **Backend Services**: Firebase
+| 분류 | 기술 |
+|------|------|
+| Framework | Flutter 3.10+ |
+| 상태관리 | Riverpod |
+| 로컬 DB | Isar |
+| 네트워크 | Dio |
+| 인증 | Google Sign-In, Firebase Auth |
+| 분석 | Firebase Analytics, Crashlytics |
 
-## ⚙️ Getting Started
+## 프로젝트 구조
 
-This guide will help you get a copy of the project up and running on your local machine for development and testing purposes.
+```text
+lib/
+├── main.dart
+└── src/
+    ├── core/              # 핵심 유틸리티
+    ├── data/
+    │   ├── datasources/   # 로컬 DB, 토큰 저장소
+    │   ├── models/        # 데이터 모델 (Note, Folder, Attachment 등)
+    │   ├── network/       # API 클라이언트
+    │   ├── repositories/  # 데이터 레포지토리
+    │   └── services/      # 동기화, 분석, 저장소 서비스
+    └── features/
+        ├── auth/          # 인증 (로그인, 회원가입)
+        ├── notes/         # 노트 목록, 편집기
+        ├── search/        # 검색
+        ├── settings/      # 설정
+        └── common/        # 공통 위젯
+```
 
-### Prerequisites
+## 시작하기
 
-- [Flutter SDK](https://docs.flutter.dev/get-started/install) installed.
-- A Firebase account and the [Firebase CLI](https://firebase.google.com/docs/cli) configured.
-- FlutterFire CLI: `dart pub global activate flutterfire_cli`
+### 요구사항
 
-### Setup
+- Flutter SDK 3.10.1 이상
+- Dart SDK 3.10.1 이상
 
-1.  **Clone the repository:**
-    ```sh
-    git clone <repository-url>
-    cd novita
-    ```
+### 설치
 
-2.  **Install dependencies:**
-    ```sh
-    flutter pub get
-    ```
+```bash
+# 의존성 설치
+flutter pub get
 
-3.  **Configure Firebase:**
+# Isar 코드 생성
+dart run build_runner build
 
-    Run `flutterfire configure` to connect the project to your own Firebase project. This will generate the necessary configuration files (like `firebase_options.dart`) that are excluded from version control.
-    ```sh
-    flutterfire configure
-    ```
+# 앱 실행
+flutter run
+```
 
-4.  **Run Code Generation:**
+## 라이선스
 
-    This project uses code generation for database models and state management. Run the following command to generate the necessary files:
-    ```sh
-    flutter pub run build_runner build --delete-conflicting-outputs
-    ```
-
-5.  **Run the app:**
-    ```sh
-    flutter run
-    ```
+이 프로젝트는 개인 프로젝트입니다.

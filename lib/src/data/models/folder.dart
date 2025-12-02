@@ -18,7 +18,9 @@ class Folder {
 
   late String name;
 
-  bool isSystem = false;
+  String? color;
+
+  String? parentId;
 
   int? sortOrder;
 
@@ -28,4 +30,35 @@ class Folder {
 
   @Backlink(to: 'folder')
   final notes = IsarLinks<Note>();
+
+  /// Convert to server JSON format for API requests
+  Map<String, dynamic> toServerJson() {
+    return {
+      if (remoteId != null) 'id': remoteId,
+      'name': name,
+      if (color != null) 'color': color,
+      if (parentId != null) 'parentId': parentId,
+      'updatedAt': updatedAt.toIso8601String(),
+    };
+  }
+
+  /// Create Folder from server JSON response
+  static Folder fromServerJson(Map<String, dynamic> json) {
+    return Folder()
+      ..remoteId = json['id'] as String?
+      ..name = json['name'] as String? ?? ''
+      ..color = json['color'] as String?
+      ..parentId = json['parentId'] as String?
+      ..createdAt = json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'] as String)
+          : DateTime.now()
+      ..updatedAt = json['updatedAt'] != null
+          ? DateTime.parse(json['updatedAt'] as String)
+          : DateTime.now()
+      ..deletedAt = json['deletedAt'] != null
+          ? DateTime.parse(json['deletedAt'] as String)
+          : null
+      ..lastSyncedAt = DateTime.now()
+      ..isDirty = false;
+  }
 }

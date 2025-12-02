@@ -10,7 +10,12 @@ import 'package:novita/src/data/models/note.dart';
 import 'package:novita/src/data/providers.dart';
 
 class NoteEditorScreen extends ConsumerStatefulWidget {
-  const NoteEditorScreen({super.key, this.note, this.folder, this.initialNoteType = NoteType.text});
+  const NoteEditorScreen({
+    super.key,
+    this.note,
+    this.folder,
+    this.initialNoteType = NoteType.text,
+  });
 
   final Note? note;
   final Folder? folder;
@@ -21,9 +26,9 @@ class NoteEditorScreen extends ConsumerStatefulWidget {
 }
 
 class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
-  late final FocusNode _bodyFocusNode;
+  late final FocusNode _contentFocusNode;
   late final TextEditingController _titleController;
-  late final TextEditingController _bodyController;
+  late final TextEditingController _contentController;
   late NoteType _noteType;
   late bool _isPinned;
   late List<ChecklistItem> _checklistItems;
@@ -38,15 +43,20 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
     super.initState();
     widget.note?.attachments.loadSync();
 
-    _bodyFocusNode = FocusNode();
+    _contentFocusNode = FocusNode();
     _titleController = TextEditingController(text: widget.note?.title ?? '');
-    _bodyController = TextEditingController(text: widget.note?.body ?? '');
+    _contentController = TextEditingController(text: widget.note?.content ?? '');
     _noteType = widget.note?.type ?? widget.initialNoteType;
-    _isPinned = widget.note?.pinned ?? false;
-    _checklistItems = widget.note?.checklistItems.map((item) => ChecklistItem()..text = item.text..done = item.done).toList() ?? [];
+    _isPinned = widget.note?.isPinned ?? false;
+    _checklistItems = widget.note?.checklistItems
+            .map((item) => ChecklistItem()
+              ..content = item.content
+              ..isCompleted = item.isCompleted)
+            .toList() ??
+        [];
     _existingAttachments.addAll(widget.note?.attachments ?? []);
     _selectedFolder = widget.folder ?? widget.note?.folder.value;
-    
+
     if (_selectedFolder == null) {
       _loadDefaultFolder();
     }
@@ -57,9 +67,9 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
     if (mounted) {
       setState(() {
         _selectedFolder = folders.cast<Folder?>().firstWhere(
-          (f) => f?.name == '기타',
-          orElse: () => folders.isNotEmpty ? folders.first : null,
-        );
+              (f) => f?.name == '기타',
+              orElse: () => folders.isNotEmpty ? folders.first : null,
+            );
       });
     }
   }
@@ -67,8 +77,8 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
   @override
   void dispose() {
     _titleController.dispose();
-    _bodyController.dispose();
-    _bodyFocusNode.dispose();
+    _contentController.dispose();
+    _contentFocusNode.dispose();
     super.dispose();
   }
 
@@ -84,9 +94,13 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
 
   void _saveNote() {
     final title = _titleController.text;
-    final body = _bodyController.text;
+    final content = _contentController.text;
 
-    if (title.isEmpty && body.isEmpty && _checklistItems.every((item) => item.text.isEmpty) && _existingAttachments.isEmpty && _newAttachments.isEmpty) {
+    if (title.isEmpty &&
+        content.isEmpty &&
+        _checklistItems.every((item) => item.content.isEmpty) &&
+        _existingAttachments.isEmpty &&
+        _newAttachments.isEmpty) {
       if (mounted) {
         Navigator.pop(context);
       }
@@ -96,30 +110,33 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
     final noteRepository = ref.read(noteRepositoryProvider);
     final noteToSave = widget.note ?? Note();
 
-    noteToSave.title = title;
+    noteToSave.title = title.isNotEmpty ? title : '제목 없음';
     noteToSave.type = _noteType;
-    noteToSave.pinned = _isPinned;
+    noteToSave.isPinned = _isPinned;
     if (_noteType == NoteType.text) {
-      noteToSave.body = body;
+      noteToSave.content = content;
     } else {
-      noteToSave.checklistItems = _checklistItems.where((item) => item.text.isNotEmpty).toList();
-      noteToSave.body = null;
+      noteToSave.checklistItems =
+          _checklistItems.where((item) => item.content.isNotEmpty).toList();
+      noteToSave.content = null;
     }
     noteToSave.updatedAt = DateTime.now();
-    
+
     final folder = _selectedFolder;
 
-    noteRepository.saveNote(
-      noteToSave, 
-      _newAttachments, 
+    noteRepository
+        .saveNote(
+      noteToSave,
+      _newAttachments,
       _deletedAttachments,
-      folder: _selectedFolder
-    ).then((_) {
+      folder: _selectedFolder,
+    )
+        .then((_) {
       if (widget.note == null) {
         ref.read(analyticsServiceProvider).logNoteCreated(
-          folder: folder?.name ?? 'Uncategorized',
-          hasImage: (_existingAttachments.isNotEmpty || _newAttachments.isNotEmpty),
-        );
+              folder: folder?.name ?? 'Uncategorized',
+              hasImage: (_existingAttachments.isNotEmpty || _newAttachments.isNotEmpty),
+            );
       }
       if (mounted) {
         Navigator.pop(context);
@@ -133,14 +150,14 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
     setState(() {
       if (_noteType == NoteType.text) {
         _noteType = NoteType.checklist;
-        if (_checklistItems.isEmpty && _bodyController.text.isNotEmpty) {
-           final lines = _bodyController.text.split('\n');
-           _checklistItems = lines.map((l) => ChecklistItem()..text = l).toList();
+        if (_checklistItems.isEmpty && _contentController.text.isNotEmpty) {
+          final lines = _contentController.text.split('\n');
+          _checklistItems = lines.map((l) => ChecklistItem()..content = l).toList();
         }
       } else {
         _noteType = NoteType.text;
-        if (_bodyController.text.isEmpty && _checklistItems.isNotEmpty) {
-          _bodyController.text = _checklistItems.map((i) => i.text).join('\n');
+        if (_contentController.text.isEmpty && _checklistItems.isNotEmpty) {
+          _contentController.text = _checklistItems.map((i) => i.content).join('\n');
         }
       }
     });
@@ -210,14 +227,18 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
                               errorBorder: InputBorder.none,
                               disabledBorder: InputBorder.none,
                               contentPadding: EdgeInsets.zero,
-                              hintStyle: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.grey),
+                              hintStyle: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey),
                             ),
-                            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                            style: const TextStyle(
+                                fontSize: 24, fontWeight: FontWeight.bold),
                             maxLines: null,
                             textInputAction: TextInputAction.next,
                           ),
                           const SizedBox(height: 8),
-                          _AttachmentEditor( 
+                          _AttachmentEditor(
                             existingAttachments: _existingAttachments,
                             newAttachments: _newAttachments,
                             onAttachmentDeleted: (attachment) => setState(() {
@@ -239,12 +260,12 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
                       sliver: SliverFillRemaining(
                         hasScrollBody: false,
                         child: GestureDetector(
-                          onTap: () => _bodyFocusNode.requestFocus(),
+                          onTap: () => _contentFocusNode.requestFocus(),
                           child: Align(
                             alignment: Alignment.topLeft,
                             child: _TextEditorBody(
-                              controller: _bodyController,
-                              focusNode: _bodyFocusNode,
+                              controller: _contentController,
+                              focusNode: _contentFocusNode,
                             ),
                           ),
                         ),
@@ -257,11 +278,12 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
                         child: _ChecklistEditorBody(
                           items: _checklistItems,
                           onAddItem: _addChecklistItem,
-                          onItemChanged: (item, value) => setState(() => item.done = value),
+                          onItemChanged: (item, value) =>
+                              setState(() => item.isCompleted = value),
                         ),
                       ),
                     ),
-                   const SliverToBoxAdapter(child: SizedBox(height: 80)),
+                  const SliverToBoxAdapter(child: SizedBox(height: 80)),
                 ],
               ),
             ),
@@ -305,13 +327,16 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
             ),
             IconButton(
               tooltip: _noteType == NoteType.text ? '체크리스트로 변경' : '텍스트로 변경',
-              icon: Icon(_noteType == NoteType.text ? Icons.checklist_rtl_rounded : Icons.notes_rounded),
+              icon: Icon(_noteType == NoteType.text
+                  ? Icons.checklist_rtl_rounded
+                  : Icons.notes_rounded),
               onPressed: _toggleNoteType,
             ),
             const Spacer(),
             Text(
-              '편집 중...', 
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey),
+              '편집 중...',
+              style:
+                  Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey),
             ),
             const SizedBox(width: 16),
           ],
@@ -321,13 +346,16 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
   }
 }
 
-
 class _AttachmentEditor extends StatelessWidget {
   final List<Attachment> existingAttachments;
   final List<Attachment> newAttachments;
   final Function(Attachment) onAttachmentDeleted;
 
-  const _AttachmentEditor({required this.existingAttachments, required this.newAttachments, required this.onAttachmentDeleted});
+  const _AttachmentEditor({
+    required this.existingAttachments,
+    required this.newAttachments,
+    required this.onAttachmentDeleted,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -350,7 +378,7 @@ class _AttachmentEditor extends StatelessWidget {
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: Image.file(
-                  File(attachment.filePath),
+                  File(attachment.url),
                   width: 120,
                   height: 120,
                   fit: BoxFit.cover,
@@ -382,6 +410,7 @@ class _AttachmentEditor extends StatelessWidget {
 class _TextEditorBody extends StatelessWidget {
   final TextEditingController controller;
   final FocusNode focusNode;
+
   const _TextEditorBody({required this.controller, required this.focusNode});
 
   @override
@@ -410,47 +439,51 @@ class _ChecklistEditorBody extends StatelessWidget {
   final VoidCallback onAddItem;
   final Function(ChecklistItem, bool) onItemChanged;
 
-  const _ChecklistEditorBody({required this.items, required this.onAddItem, required this.onItemChanged});
+  const _ChecklistEditorBody({
+    required this.items,
+    required this.onAddItem,
+    required this.onItemChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         ...items.map((item) => Padding(
-          padding: const EdgeInsets.only(bottom: 8.0),
-          child: Row(
-            children: [
-              Transform.scale(
-                scale: 1.1,
-                child: Checkbox(
-                  value: item.done,
-                  onChanged: (value) => onItemChanged(item, value ?? false),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                ),
-              ),
-              Expanded(
-                child: TextFormField(
-                  initialValue: item.text,
-                  onChanged: (value) => item.text = value,
-                  decoration: const InputDecoration(
-                    hintText: '할 일',
-                    border: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    errorBorder: InputBorder.none,
-                    disabledBorder: InputBorder.none,
-                    isDense: true,
-                    contentPadding: EdgeInsets.zero,
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: Row(
+                children: [
+                  Transform.scale(
+                    scale: 1.1,
+                    child: Checkbox(
+                      value: item.isCompleted,
+                      onChanged: (value) => onItemChanged(item, value ?? false),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                    ),
                   ),
-                  style: TextStyle(
-                    decoration: item.done ? TextDecoration.lineThrough : null,
-                    color: item.done ? Colors.grey : null,
+                  Expanded(
+                    child: TextFormField(
+                      initialValue: item.content,
+                      onChanged: (value) => item.content = value,
+                      decoration: const InputDecoration(
+                        hintText: '할 일',
+                        border: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        errorBorder: InputBorder.none,
+                        disabledBorder: InputBorder.none,
+                        isDense: true,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                      style: TextStyle(
+                        decoration: item.isCompleted ? TextDecoration.lineThrough : null,
+                        color: item.isCompleted ? Colors.grey : null,
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
-          ),
-        )),
+            )),
         TextButton.icon(
           onPressed: onAddItem,
           icon: const Icon(Icons.add),
@@ -479,7 +512,7 @@ class _FolderSelector extends ConsumerWidget {
     return foldersAsync.when(
       data: (folders) {
         if (folders.isEmpty) return const SizedBox.shrink();
-        
+
         return Container(
           margin: const EdgeInsets.only(bottom: 0),
           child: Row(
@@ -509,7 +542,8 @@ class _FolderSelector extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(width: 4),
-                      Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: Theme.of(context).colorScheme.primary),
+                      Icon(Icons.keyboard_arrow_down_rounded,
+                          size: 18, color: Theme.of(context).colorScheme.primary),
                     ],
                   ),
                 ),

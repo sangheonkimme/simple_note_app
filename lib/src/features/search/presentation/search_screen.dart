@@ -3,119 +3,105 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novita/src/data/providers.dart';
 import 'package:novita/src/features/common/presentation/empty_state_widget.dart';
 import 'package:novita/src/features/common/presentation/note_card.dart';
+import 'package:novita/src/features/notes/presentation/note_editor_screen.dart';
 
-class SearchScreen extends ConsumerWidget {
+class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final searchQuery = ref.watch(searchQueryProvider);
-    final searchResults = ref.watch(searchResultProvider);
+  ConsumerState<SearchScreen> createState() => _SearchScreenState();
+}
 
-    final suggestionChips = ['회의록', '아이디어', '체크리스트'];
+class _SearchScreenState extends ConsumerState<SearchScreen> {
+  final _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final searchResults = ref.watch(searchResultProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('노트 검색'),
-        scrolledUnderElevation: 0,
+        title: const Text('검색'),
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
-              child: TextField(
-                autofocus: true,
-                decoration: InputDecoration(
-                  hintText: '제목 또는 내용으로 검색',
-                  prefixIcon: const Icon(Icons.search),
-                  suffixIcon: searchQuery.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.close),
-                          onPressed: () => ref.read(searchQueryProvider.notifier).state = '',
-                        )
-                      : null,
-                ),
-                onChanged: (query) {
-                  ref.read(searchQueryProvider.notifier).state = query;
-                },
-                onSubmitted: (query) {
-                  if (query.isNotEmpty) {
-                    ref.read(analyticsServiceProvider).logSearch(query);
-                  }
-                },
-              ),
-            ),
-            SizedBox(
-              height: 40,
-              child: ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                scrollDirection: Axis.horizontal,
-                itemBuilder: (context, index) {
-                  final chipLabel = suggestionChips[index];
-                  final isSelected = chipLabel == searchQuery;
-                  return ChoiceChip(
-                    label: Text(chipLabel),
-                    selected: isSelected,
-                    showCheckmark: false,
-                    selectedColor: Theme.of(context).colorScheme.primaryContainer,
-                    backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-                    labelStyle: TextStyle(
-                      color: isSelected 
-                          ? Theme.of(context).colorScheme.onPrimaryContainer 
-                          : Theme.of(context).colorScheme.onSurfaceVariant,
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                    ),
-                    side: isSelected ? BorderSide.none : BorderSide(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3)),
-                    onSelected: (_) {
-                      ref.read(searchQueryProvider.notifier).state = chipLabel;
-                    },
-                  );
-                },
-                separatorBuilder: (_, __) => const SizedBox(width: 8),
-                itemCount: suggestionChips.length,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Expanded(
-              child: searchResults.when(
-                data: (notes) {
-                  if (searchQuery.isEmpty) {
-                    return const EmptyStateWidget(
-                      icon: Icons.search_outlined,
-                      message: '노트의 제목 또는 내용으로\n노트를 검색해 보세요.',
-                    );
-                  }
-                  if (notes.isEmpty) {
-                    return const EmptyStateWidget(
-                      icon: Icons.search_off_outlined,
-                      message: '검색 결과가 없습니다.',
-                    );
-                  }
-                  return GridView.builder(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 16.0,
-                      mainAxisSpacing: 16.0,
-                      childAspectRatio: 0.82,
-                    ),
-                    itemCount: notes.length,
-                    itemBuilder: (context, index) {
-                      final note = notes[index];
-                      return NoteCard(note: note);
-                    },
-                  );
-                },
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, stack) => EmptyStateWidget(
-                  icon: Icons.error_outline,
-                  message: '오류가 발생했습니다.\n$error',
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: '메모 검색...',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _searchController.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          _searchController.clear();
+                          ref.read(searchQueryProvider.notifier).state = '';
+                        },
+                      )
+                    : null,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
+              onChanged: (value) {
+                ref.read(searchQueryProvider.notifier).state = value;
+              },
             ),
-          ],
-        ),
+          ),
+          Expanded(
+            child: searchResults.when(
+              data: (notes) {
+                if (_searchController.text.isEmpty) {
+                  return const EmptyStateWidget(
+                    icon: Icons.search,
+                    title: '검색어를 입력하세요',
+                    subtitle: '제목이나 내용으로 메모를 검색할 수 있습니다',
+                  );
+                }
+
+                if (notes.isEmpty) {
+                  return EmptyStateWidget(
+                    icon: Icons.search_off,
+                    title: '검색 결과가 없습니다',
+                    subtitle: '"${_searchController.text}"에 대한 결과를 찾을 수 없습니다',
+                  );
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: notes.length,
+                  itemBuilder: (context, index) {
+                    final note = notes[index];
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: NoteCard(
+                        note: note,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => NoteEditorScreen(note: note),
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  },
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, stack) => Center(child: Text('Error: $error')),
+            ),
+          ),
+        ],
       ),
     );
   }

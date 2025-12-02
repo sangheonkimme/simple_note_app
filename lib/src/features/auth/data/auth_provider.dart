@@ -1,26 +1,34 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:novita/src/data/network/dio_provider.dart';
+import 'package:novita/src/features/auth/data/api_auth_repository.dart';
 import 'package:novita/src/features/auth/data/auth_repository.dart';
 import 'package:novita/src/features/auth/domain/user_model.dart';
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
-  return MockAuthRepository();
+  final dio = ref.watch(dioProvider);
+  final tokenStorage = ref.watch(tokenStorageProvider);
+  return ApiAuthRepository(
+    dio: dio,
+    tokenStorage: tokenStorage,
+  );
 });
 
-final authStateProvider = StateNotifierProvider<AuthController, AsyncValue<User?>>((ref) {
-  return AuthController(ref.watch(authRepositoryProvider));
+final authStateProvider =
+    StateNotifierProvider<AuthController, AsyncValue<User?>>((ref) {
+  final authRepository = ref.watch(authRepositoryProvider);
+  return AuthController(authRepository);
 });
 
 class AuthController extends StateNotifier<AsyncValue<User?>> {
-  final AuthRepository _repository;
+  final AuthRepository _authRepository;
 
-  AuthController(this._repository) : super(const AsyncValue.loading()) {
-    checkAuth();
+  AuthController(this._authRepository) : super(const AsyncValue.loading()) {
+    _checkAuth();
   }
 
-  Future<void> checkAuth() async {
-    state = const AsyncValue.loading();
+  Future<void> _checkAuth() async {
     try {
-      final user = await _repository.checkAuth();
+      final user = await _authRepository.checkAuth();
       state = AsyncValue.data(user);
     } catch (e, st) {
       state = AsyncValue.error(e, st);
@@ -30,37 +38,42 @@ class AuthController extends StateNotifier<AsyncValue<User?>> {
   Future<void> login(String email, String password) async {
     state = const AsyncValue.loading();
     try {
-      await _repository.login(email, password);
-      await checkAuth();
+      await _authRepository.login(email, password);
+      final user = await _authRepository.checkAuth();
+      state = AsyncValue.data(user);
     } catch (e, st) {
       state = AsyncValue.error(e, st);
+      rethrow;
     }
   }
 
-  Future<void> register(String email, String password, String nickname) async {
+  Future<void> register(String email, String password, String name) async {
     state = const AsyncValue.loading();
     try {
-      await _repository.register(email, password, nickname);
-      await checkAuth();
+      await _authRepository.register(email, password, name);
+      final user = await _authRepository.checkAuth();
+      state = AsyncValue.data(user);
     } catch (e, st) {
       state = AsyncValue.error(e, st);
+      rethrow;
     }
   }
 
   Future<void> googleLogin() async {
     state = const AsyncValue.loading();
     try {
-      await _repository.googleLogin();
-      await checkAuth();
+      await _authRepository.googleLogin();
+      final user = await _authRepository.checkAuth();
+      state = AsyncValue.data(user);
     } catch (e, st) {
       state = AsyncValue.error(e, st);
+      rethrow;
     }
   }
 
   Future<void> logout() async {
-    state = const AsyncValue.loading();
     try {
-      await _repository.logout();
+      await _authRepository.logout();
       state = const AsyncValue.data(null);
     } catch (e, st) {
       state = AsyncValue.error(e, st);
@@ -68,15 +81,11 @@ class AuthController extends StateNotifier<AsyncValue<User?>> {
   }
 
   Future<void> loginAsGuest() async {
-    state = const AsyncValue.loading();
-    try {
-      await _repository.loginAsGuest();
-      // Guest is treated as null user for now, or we can create a guest user object
-      // If we want to navigate to Home, we just need to stop loading.
-      // But since Home is always visible, this just updates the state.
-      state = const AsyncValue.data(null); 
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
-    }
+    await _authRepository.loginAsGuest();
+    state = const AsyncValue.data(null);
+  }
+
+  Future<void> refresh() async {
+    await _checkAuth();
   }
 }

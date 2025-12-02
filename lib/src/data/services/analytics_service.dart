@@ -1,33 +1,31 @@
-import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:flutter/foundation.dart';
 
 class AnalyticsService {
-  final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
-
-  // A helper method to log events.
-  Future<void> logEvent(String name, {Map<String, Object>? parameters}) async {
-    await _analytics.logEvent(name: name, parameters: parameters);
+  Future<void> logNoteCreated({
+    required String folder,
+    required bool hasImage,
+  }) async {
+    debugPrint('Analytics: Note created in $folder, hasImage: $hasImage');
+    // TODO: Implement Firebase Analytics
   }
 
-  // Log screen views
+  Future<void> logNoteDeleted() async {
+    debugPrint('Analytics: Note deleted');
+  }
+
+  Future<void> logSearch(String query) async {
+    debugPrint('Analytics: Search query: $query');
+  }
+
+  Future<void> logLogin(String method) async {
+    debugPrint('Analytics: Login with $method');
+  }
+
+  Future<void> logSignup(String method) async {
+    debugPrint('Analytics: Signup with $method');
+  }
+
   Future<void> logScreenView(String screenName) async {
-    await _analytics.logScreenView(screenName: screenName);
-  }
-
-  // Log when a note is created
-  Future<void> logNoteCreated({required String folder, required bool hasImage}) async {
-    await logEvent('note_created', parameters: {
-      'folder': folder,
-      'has_image': hasImage.toString(),
-    });
-  }
-
-  // Log when a folder is created
-  Future<void> logFolderCreated(String folderName) async {
-    await logEvent('folder_created', parameters: {'name': folderName});
-  }
-
-  // Log when a search is performed
-  Future<void> logSearch(String searchTerm) async {
-    await logEvent('search', parameters: {'search_term': searchTerm});
+    debugPrint('Analytics: Screen view: $screenName');
   }
 }

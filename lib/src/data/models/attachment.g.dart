@@ -22,20 +22,46 @@ const AttachmentSchema = CollectionSchema(
       name: r'createdAt',
       type: IsarType.dateTime,
     ),
-    r'filePath': PropertySchema(
+    r'fileName': PropertySchema(
       id: 1,
-      name: r'filePath',
+      name: r'fileName',
+      type: IsarType.string,
+    ),
+    r'fileSize': PropertySchema(
+      id: 2,
+      name: r'fileSize',
+      type: IsarType.long,
+    ),
+    r'hash': PropertySchema(
+      id: 3,
+      name: r'hash',
       type: IsarType.string,
     ),
     r'mimeType': PropertySchema(
-      id: 2,
+      id: 4,
       name: r'mimeType',
       type: IsarType.string,
     ),
-    r'size': PropertySchema(
-      id: 3,
-      name: r'size',
-      type: IsarType.long,
+    r'remoteId': PropertySchema(
+      id: 5,
+      name: r'remoteId',
+      type: IsarType.string,
+    ),
+    r'thumbnailUrl': PropertySchema(
+      id: 6,
+      name: r'thumbnailUrl',
+      type: IsarType.string,
+    ),
+    r'type': PropertySchema(
+      id: 7,
+      name: r'type',
+      type: IsarType.string,
+      enumMap: _AttachmenttypeEnumValueMap,
+    ),
+    r'url': PropertySchema(
+      id: 8,
+      name: r'url',
+      type: IsarType.string,
     )
   },
   estimateSize: _attachmentEstimateSize,
@@ -43,7 +69,21 @@ const AttachmentSchema = CollectionSchema(
   deserialize: _attachmentDeserialize,
   deserializeProp: _attachmentDeserializeProp,
   idName: r'id',
-  indexes: {},
+  indexes: {
+    r'remoteId': IndexSchema(
+      id: 6301175856541681032,
+      name: r'remoteId',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'remoteId',
+          type: IndexType.hash,
+          caseSensitive: true,
+        )
+      ],
+    )
+  },
   links: {
     r'note': LinkSchema(
       id: 199276741608692292,
@@ -65,8 +105,28 @@ int _attachmentEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
-  bytesCount += 3 + object.filePath.length * 3;
+  bytesCount += 3 + object.fileName.length * 3;
+  {
+    final value = object.hash;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.mimeType.length * 3;
+  {
+    final value = object.remoteId;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
+    final value = object.thumbnailUrl;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  bytesCount += 3 + object.type.name.length * 3;
+  bytesCount += 3 + object.url.length * 3;
   return bytesCount;
 }
 
@@ -77,9 +137,14 @@ void _attachmentSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeDateTime(offsets[0], object.createdAt);
-  writer.writeString(offsets[1], object.filePath);
-  writer.writeString(offsets[2], object.mimeType);
-  writer.writeLong(offsets[3], object.size);
+  writer.writeString(offsets[1], object.fileName);
+  writer.writeLong(offsets[2], object.fileSize);
+  writer.writeString(offsets[3], object.hash);
+  writer.writeString(offsets[4], object.mimeType);
+  writer.writeString(offsets[5], object.remoteId);
+  writer.writeString(offsets[6], object.thumbnailUrl);
+  writer.writeString(offsets[7], object.type.name);
+  writer.writeString(offsets[8], object.url);
 }
 
 Attachment _attachmentDeserialize(
@@ -90,10 +155,17 @@ Attachment _attachmentDeserialize(
 ) {
   final object = Attachment();
   object.createdAt = reader.readDateTime(offsets[0]);
-  object.filePath = reader.readString(offsets[1]);
+  object.fileName = reader.readString(offsets[1]);
+  object.fileSize = reader.readLong(offsets[2]);
+  object.hash = reader.readStringOrNull(offsets[3]);
   object.id = id;
-  object.mimeType = reader.readString(offsets[2]);
-  object.size = reader.readLongOrNull(offsets[3]);
+  object.mimeType = reader.readString(offsets[4]);
+  object.remoteId = reader.readStringOrNull(offsets[5]);
+  object.thumbnailUrl = reader.readStringOrNull(offsets[6]);
+  object.type =
+      _AttachmenttypeValueEnumMap[reader.readStringOrNull(offsets[7])] ??
+          AttachmentType.image;
+  object.url = reader.readString(offsets[8]);
   return object;
 }
 
@@ -109,13 +181,35 @@ P _attachmentDeserializeProp<P>(
     case 1:
       return (reader.readString(offset)) as P;
     case 2:
-      return (reader.readString(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 3:
-      return (reader.readLongOrNull(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
+    case 4:
+      return (reader.readString(offset)) as P;
+    case 5:
+      return (reader.readStringOrNull(offset)) as P;
+    case 6:
+      return (reader.readStringOrNull(offset)) as P;
+    case 7:
+      return (_AttachmenttypeValueEnumMap[reader.readStringOrNull(offset)] ??
+          AttachmentType.image) as P;
+    case 8:
+      return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
 }
+
+const _AttachmenttypeEnumValueMap = {
+  r'image': r'image',
+  r'audio': r'audio',
+  r'file': r'file',
+};
+const _AttachmenttypeValueEnumMap = {
+  r'image': AttachmentType.image,
+  r'audio': AttachmentType.audio,
+  r'file': AttachmentType.file,
+};
 
 Id _attachmentGetId(Attachment object) {
   return object.id;
@@ -205,6 +299,71 @@ extension AttachmentQueryWhere
       ));
     });
   }
+
+  QueryBuilder<Attachment, Attachment, QAfterWhereClause> remoteIdIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'remoteId',
+        value: [null],
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterWhereClause> remoteIdIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'remoteId',
+        lower: [null],
+        includeLower: false,
+        upper: [],
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterWhereClause> remoteIdEqualTo(
+      String? remoteId) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'remoteId',
+        value: [remoteId],
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterWhereClause> remoteIdNotEqualTo(
+      String? remoteId) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'remoteId',
+              lower: [],
+              upper: [remoteId],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'remoteId',
+              lower: [remoteId],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'remoteId',
+              lower: [remoteId],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'remoteId',
+              lower: [],
+              upper: [remoteId],
+              includeUpper: false,
+            ));
+      }
+    });
+  }
 }
 
 extension AttachmentQueryFilter
@@ -263,13 +422,13 @@ extension AttachmentQueryFilter
     });
   }
 
-  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> filePathEqualTo(
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> fileNameEqualTo(
     String value, {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'filePath',
+        property: r'fileName',
         value: value,
         caseSensitive: caseSensitive,
       ));
@@ -277,7 +436,7 @@ extension AttachmentQueryFilter
   }
 
   QueryBuilder<Attachment, Attachment, QAfterFilterCondition>
-      filePathGreaterThan(
+      fileNameGreaterThan(
     String value, {
     bool include = false,
     bool caseSensitive = true,
@@ -285,14 +444,14 @@ extension AttachmentQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
         include: include,
-        property: r'filePath',
+        property: r'fileName',
         value: value,
         caseSensitive: caseSensitive,
       ));
     });
   }
 
-  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> filePathLessThan(
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> fileNameLessThan(
     String value, {
     bool include = false,
     bool caseSensitive = true,
@@ -300,14 +459,14 @@ extension AttachmentQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.lessThan(
         include: include,
-        property: r'filePath',
+        property: r'fileName',
         value: value,
         caseSensitive: caseSensitive,
       ));
     });
   }
 
-  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> filePathBetween(
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> fileNameBetween(
     String lower,
     String upper, {
     bool includeLower = true,
@@ -316,7 +475,7 @@ extension AttachmentQueryFilter
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.between(
-        property: r'filePath',
+        property: r'fileName',
         lower: lower,
         includeLower: includeLower,
         upper: upper,
@@ -327,50 +486,50 @@ extension AttachmentQueryFilter
   }
 
   QueryBuilder<Attachment, Attachment, QAfterFilterCondition>
-      filePathStartsWith(
+      fileNameStartsWith(
     String value, {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'filePath',
+        property: r'fileName',
         value: value,
         caseSensitive: caseSensitive,
       ));
     });
   }
 
-  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> filePathEndsWith(
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> fileNameEndsWith(
     String value, {
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'filePath',
+        property: r'fileName',
         value: value,
         caseSensitive: caseSensitive,
       ));
     });
   }
 
-  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> filePathContains(
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> fileNameContains(
       String value,
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.contains(
-        property: r'filePath',
+        property: r'fileName',
         value: value,
         caseSensitive: caseSensitive,
       ));
     });
   }
 
-  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> filePathMatches(
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> fileNameMatches(
       String pattern,
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.matches(
-        property: r'filePath',
+        property: r'fileName',
         wildcard: pattern,
         caseSensitive: caseSensitive,
       ));
@@ -378,20 +537,220 @@ extension AttachmentQueryFilter
   }
 
   QueryBuilder<Attachment, Attachment, QAfterFilterCondition>
-      filePathIsEmpty() {
+      fileNameIsEmpty() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'filePath',
+        property: r'fileName',
         value: '',
       ));
     });
   }
 
   QueryBuilder<Attachment, Attachment, QAfterFilterCondition>
-      filePathIsNotEmpty() {
+      fileNameIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'filePath',
+        property: r'fileName',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> fileSizeEqualTo(
+      int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'fileSize',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition>
+      fileSizeGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'fileSize',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> fileSizeLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'fileSize',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> fileSizeBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'fileSize',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> hashIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'hash',
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> hashIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'hash',
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> hashEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'hash',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> hashGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'hash',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> hashLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'hash',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> hashBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'hash',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> hashStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'hash',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> hashEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'hash',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> hashContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'hash',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> hashMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'hash',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> hashIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'hash',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> hashIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'hash',
         value: '',
       ));
     });
@@ -584,71 +943,567 @@ extension AttachmentQueryFilter
     });
   }
 
-  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> sizeIsNull() {
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> remoteIdIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'size',
+        property: r'remoteId',
       ));
     });
   }
 
-  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> sizeIsNotNull() {
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition>
+      remoteIdIsNotNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'size',
+        property: r'remoteId',
       ));
     });
   }
 
-  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> sizeEqualTo(
-      int? value) {
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> remoteIdEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'size',
+        property: r'remoteId',
         value: value,
+        caseSensitive: caseSensitive,
       ));
     });
   }
 
-  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> sizeGreaterThan(
-    int? value, {
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition>
+      remoteIdGreaterThan(
+    String? value, {
     bool include = false,
+    bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
         include: include,
-        property: r'size',
+        property: r'remoteId',
         value: value,
+        caseSensitive: caseSensitive,
       ));
     });
   }
 
-  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> sizeLessThan(
-    int? value, {
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> remoteIdLessThan(
+    String? value, {
     bool include = false,
+    bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.lessThan(
         include: include,
-        property: r'size',
+        property: r'remoteId',
         value: value,
+        caseSensitive: caseSensitive,
       ));
     });
   }
 
-  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> sizeBetween(
-    int? lower,
-    int? upper, {
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> remoteIdBetween(
+    String? lower,
+    String? upper, {
     bool includeLower = true,
     bool includeUpper = true,
+    bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.between(
-        property: r'size',
+        property: r'remoteId',
         lower: lower,
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition>
+      remoteIdStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'remoteId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> remoteIdEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'remoteId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> remoteIdContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'remoteId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> remoteIdMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'remoteId',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition>
+      remoteIdIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'remoteId',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition>
+      remoteIdIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'remoteId',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition>
+      thumbnailUrlIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'thumbnailUrl',
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition>
+      thumbnailUrlIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'thumbnailUrl',
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition>
+      thumbnailUrlEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'thumbnailUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition>
+      thumbnailUrlGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'thumbnailUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition>
+      thumbnailUrlLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'thumbnailUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition>
+      thumbnailUrlBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'thumbnailUrl',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition>
+      thumbnailUrlStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'thumbnailUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition>
+      thumbnailUrlEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'thumbnailUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition>
+      thumbnailUrlContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'thumbnailUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition>
+      thumbnailUrlMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'thumbnailUrl',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition>
+      thumbnailUrlIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'thumbnailUrl',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition>
+      thumbnailUrlIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'thumbnailUrl',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> typeEqualTo(
+    AttachmentType value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'type',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> typeGreaterThan(
+    AttachmentType value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'type',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> typeLessThan(
+    AttachmentType value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'type',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> typeBetween(
+    AttachmentType lower,
+    AttachmentType upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'type',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> typeStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'type',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> typeEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'type',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> typeContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'type',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> typeMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'type',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> typeIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'type',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> typeIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'type',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> urlEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'url',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> urlGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'url',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> urlLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'url',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> urlBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'url',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> urlStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'url',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> urlEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'url',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> urlContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'url',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> urlMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'url',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> urlIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'url',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterFilterCondition> urlIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'url',
+        value: '',
       ));
     });
   }
@@ -687,15 +1542,39 @@ extension AttachmentQuerySortBy
     });
   }
 
-  QueryBuilder<Attachment, Attachment, QAfterSortBy> sortByFilePath() {
+  QueryBuilder<Attachment, Attachment, QAfterSortBy> sortByFileName() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'filePath', Sort.asc);
+      return query.addSortBy(r'fileName', Sort.asc);
     });
   }
 
-  QueryBuilder<Attachment, Attachment, QAfterSortBy> sortByFilePathDesc() {
+  QueryBuilder<Attachment, Attachment, QAfterSortBy> sortByFileNameDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'filePath', Sort.desc);
+      return query.addSortBy(r'fileName', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterSortBy> sortByFileSize() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'fileSize', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterSortBy> sortByFileSizeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'fileSize', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterSortBy> sortByHash() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hash', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterSortBy> sortByHashDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hash', Sort.desc);
     });
   }
 
@@ -711,15 +1590,51 @@ extension AttachmentQuerySortBy
     });
   }
 
-  QueryBuilder<Attachment, Attachment, QAfterSortBy> sortBySize() {
+  QueryBuilder<Attachment, Attachment, QAfterSortBy> sortByRemoteId() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'size', Sort.asc);
+      return query.addSortBy(r'remoteId', Sort.asc);
     });
   }
 
-  QueryBuilder<Attachment, Attachment, QAfterSortBy> sortBySizeDesc() {
+  QueryBuilder<Attachment, Attachment, QAfterSortBy> sortByRemoteIdDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'size', Sort.desc);
+      return query.addSortBy(r'remoteId', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterSortBy> sortByThumbnailUrl() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'thumbnailUrl', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterSortBy> sortByThumbnailUrlDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'thumbnailUrl', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterSortBy> sortByType() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'type', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterSortBy> sortByTypeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'type', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterSortBy> sortByUrl() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'url', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterSortBy> sortByUrlDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'url', Sort.desc);
     });
   }
 }
@@ -738,15 +1653,39 @@ extension AttachmentQuerySortThenBy
     });
   }
 
-  QueryBuilder<Attachment, Attachment, QAfterSortBy> thenByFilePath() {
+  QueryBuilder<Attachment, Attachment, QAfterSortBy> thenByFileName() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'filePath', Sort.asc);
+      return query.addSortBy(r'fileName', Sort.asc);
     });
   }
 
-  QueryBuilder<Attachment, Attachment, QAfterSortBy> thenByFilePathDesc() {
+  QueryBuilder<Attachment, Attachment, QAfterSortBy> thenByFileNameDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'filePath', Sort.desc);
+      return query.addSortBy(r'fileName', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterSortBy> thenByFileSize() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'fileSize', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterSortBy> thenByFileSizeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'fileSize', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterSortBy> thenByHash() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hash', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterSortBy> thenByHashDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hash', Sort.desc);
     });
   }
 
@@ -774,15 +1713,51 @@ extension AttachmentQuerySortThenBy
     });
   }
 
-  QueryBuilder<Attachment, Attachment, QAfterSortBy> thenBySize() {
+  QueryBuilder<Attachment, Attachment, QAfterSortBy> thenByRemoteId() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'size', Sort.asc);
+      return query.addSortBy(r'remoteId', Sort.asc);
     });
   }
 
-  QueryBuilder<Attachment, Attachment, QAfterSortBy> thenBySizeDesc() {
+  QueryBuilder<Attachment, Attachment, QAfterSortBy> thenByRemoteIdDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'size', Sort.desc);
+      return query.addSortBy(r'remoteId', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterSortBy> thenByThumbnailUrl() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'thumbnailUrl', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterSortBy> thenByThumbnailUrlDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'thumbnailUrl', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterSortBy> thenByType() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'type', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterSortBy> thenByTypeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'type', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterSortBy> thenByUrl() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'url', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QAfterSortBy> thenByUrlDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'url', Sort.desc);
     });
   }
 }
@@ -795,10 +1770,23 @@ extension AttachmentQueryWhereDistinct
     });
   }
 
-  QueryBuilder<Attachment, Attachment, QDistinct> distinctByFilePath(
+  QueryBuilder<Attachment, Attachment, QDistinct> distinctByFileName(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'filePath', caseSensitive: caseSensitive);
+      return query.addDistinctBy(r'fileName', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QDistinct> distinctByFileSize() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'fileSize');
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QDistinct> distinctByHash(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'hash', caseSensitive: caseSensitive);
     });
   }
 
@@ -809,9 +1797,31 @@ extension AttachmentQueryWhereDistinct
     });
   }
 
-  QueryBuilder<Attachment, Attachment, QDistinct> distinctBySize() {
+  QueryBuilder<Attachment, Attachment, QDistinct> distinctByRemoteId(
+      {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'size');
+      return query.addDistinctBy(r'remoteId', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QDistinct> distinctByThumbnailUrl(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'thumbnailUrl', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QDistinct> distinctByType(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'type', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Attachment, Attachment, QDistinct> distinctByUrl(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'url', caseSensitive: caseSensitive);
     });
   }
 }
@@ -830,9 +1840,21 @@ extension AttachmentQueryProperty
     });
   }
 
-  QueryBuilder<Attachment, String, QQueryOperations> filePathProperty() {
+  QueryBuilder<Attachment, String, QQueryOperations> fileNameProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'filePath');
+      return query.addPropertyName(r'fileName');
+    });
+  }
+
+  QueryBuilder<Attachment, int, QQueryOperations> fileSizeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'fileSize');
+    });
+  }
+
+  QueryBuilder<Attachment, String?, QQueryOperations> hashProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'hash');
     });
   }
 
@@ -842,9 +1864,27 @@ extension AttachmentQueryProperty
     });
   }
 
-  QueryBuilder<Attachment, int?, QQueryOperations> sizeProperty() {
+  QueryBuilder<Attachment, String?, QQueryOperations> remoteIdProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'size');
+      return query.addPropertyName(r'remoteId');
+    });
+  }
+
+  QueryBuilder<Attachment, String?, QQueryOperations> thumbnailUrlProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'thumbnailUrl');
+    });
+  }
+
+  QueryBuilder<Attachment, AttachmentType, QQueryOperations> typeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'type');
+    });
+  }
+
+  QueryBuilder<Attachment, String, QQueryOperations> urlProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'url');
     });
   }
 }

@@ -17,17 +17,19 @@ class ApiAuthRepository implements AuthRepository {
     required this.dio,
     required this.tokenStorage,
     GoogleSignIn? googleSignIn,
-  }) : googleSignIn = googleSignIn ?? GoogleSignIn();
+  }) : googleSignIn =
+           googleSignIn ??
+           GoogleSignIn(
+             serverClientId:
+                 '1025837073515-0gg891802fmkglbfuqg99j3138l8f86h.apps.googleusercontent.com',
+           );
 
   @override
   Future<void> login(String email, String password) async {
     try {
       final response = await dio.post(
         AppConstants.loginEndpoint,
-        data: {
-          'email': email,
-          'password': password,
-        },
+        data: {'email': email, 'password': password},
       );
 
       if (response.statusCode == 200) {
@@ -49,11 +51,7 @@ class ApiAuthRepository implements AuthRepository {
     try {
       final response = await dio.post(
         AppConstants.registerEndpoint,
-        data: {
-          'email': email,
-          'password': password,
-          'name': name,
-        },
+        data: {'email': email, 'password': password, 'name': name},
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -107,9 +105,7 @@ class ApiAuthRepository implements AuthRepository {
       debugPrint('Sending credential to backend...');
       final response = await dio.post(
         AppConstants.googleLoginEndpoint,
-        data: {
-          'credential': idToken,
-        },
+        data: {'credential': idToken},
       );
 
       debugPrint('Backend response: ${response.statusCode}');

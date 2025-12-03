@@ -133,7 +133,7 @@ class _HomeHeader extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authStateProvider);
 
-    final user = authState.whenData((u) => u).value;
+    final user = authState.valueOrNull;
     final isLoggedIn = user != null;
 
     return Row(

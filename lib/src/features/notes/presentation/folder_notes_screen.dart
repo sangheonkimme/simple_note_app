@@ -4,9 +4,9 @@ import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:novita/src/data/models/folder.dart';
 import 'package:novita/src/data/models/note.dart';
 import 'package:novita/src/data/providers.dart';
-import 'package:novita/src/features/common/presentation/empty_state_widget.dart';
 import 'package:novita/src/features/common/presentation/note_card.dart';
 import 'package:novita/src/features/notes/presentation/note_editor_screen.dart';
+
 
 class FolderNotesScreen extends ConsumerWidget {
   final Folder folder;
@@ -31,19 +31,19 @@ class FolderNotesScreen extends ConsumerWidget {
       ),
       body: notesStream.when(
         data: (notes) {
+          print('🔍 DEBUG FolderNotesScreen: Got ${notes.length} notes for folder ${folder.name} (id: ${folder.id})');
+          for (var i = 0; i < notes.length && i < 3; i++) {
+            print('🔍 DEBUG Note $i: id=${notes[i].id}, title="${notes[i].title}"');
+          }
+          
           if (notes.isEmpty) {
-            return EmptyStateWidget(
-              icon: Icons.note_add_outlined,
-              title: '메모가 없습니다',
-              subtitle: '새로운 메모를 추가해보세요',
-              action: FilledButton.icon(
-                onPressed: () => _createNewNote(context, ref),
-                icon: const Icon(Icons.add),
-                label: const Text('메모 추가'),
-              ),
+            print('🔍 DEBUG: Showing empty state message');
+            return const Center(
+              child: Text('작성된 노트가 없습니다.'),
             );
           }
-
+          
+          print('🔍 DEBUG: Rendering grid with ${notes.length} notes');
           return Padding(
             padding: const EdgeInsets.all(16.0),
             child: MasonryGridView.count(
@@ -69,12 +69,21 @@ class FolderNotesScreen extends ConsumerWidget {
             ),
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(child: Text('Error: $error')),
+        loading: () {
+          print('🔍 DEBUG FolderNotesScreen: Stream is LOADING for folder ${folder.name} (id: ${folder.id})');
+          return const Center(child: CircularProgressIndicator());
+        },
+        error: (error, stack) {
+          print('🔍 DEBUG FolderNotesScreen: Stream ERROR for folder ${folder.name} (id: ${folder.id})');
+          print('🔍 DEBUG Error: $error');
+          print('🔍 DEBUG Stack: $stack');
+          return Center(child: Text('Error: $error'));
+        },
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _createNewNote(context, ref),
-        child: const Icon(Icons.add),
+        backgroundColor: const Color(0xFF7A5CFF),
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }

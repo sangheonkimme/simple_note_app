@@ -77,91 +77,218 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final isAnyLoading = _isLoading || _isGoogleLoading;
 
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('로그인'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF1F2937)),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              TextFormField(
-                controller: _emailController,
-                decoration: const InputDecoration(
-                  labelText: '이메일',
-                  border: OutlineInputBorder(),
-                  hintText: 'example@email.com',
-                ),
-                keyboardType: TextInputType.emailAddress,
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return '이메일을 입력해주세요';
-                  }
-                  return null;
-                },
-                enabled: !isAnyLoading,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _passwordController,
-                decoration: const InputDecoration(
-                  labelText: '비밀번호',
-                  border: OutlineInputBorder(),
-                ),
-                obscureText: true,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return '비밀번호를 입력해주세요';
-                  }
-                  return null;
-                },
-                enabled: !isAnyLoading,
-              ),
-              const SizedBox(height: 24),
-              FilledButton(
-                onPressed: isAnyLoading ? null : _handleLogin,
-                style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-                child: _isLoading
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('로그인'),
-              ),
-              const SizedBox(height: 16),
-              OutlinedButton.icon(
-                onPressed: isAnyLoading ? null : _handleGoogleLogin,
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-                icon: _isGoogleLoading
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.g_mobiledata, size: 24),
-                label: const Text('Google로 로그인'),
-              ),
-              TextButton(
-                onPressed: isAnyLoading
-                    ? null
-                    : () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const SignupScreen()),
-                        );
-                      },
-                child: const Text('계정이 없으신가요? 회원가입'),
-              ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFFF5F3FF),
+              Color(0xFFEDE9FE),
+              Colors.white,
             ],
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Icon(
+                    Icons.lock_person_rounded,
+                    size: 64,
+                    color: Color(0xFF7A5CFF),
+                  ),
+                  const SizedBox(height: 32),
+                  Text(
+                    'Welcome Back',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF1F2937),
+                        ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Sign in to continue',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: Colors.grey.shade600,
+                        ),
+                  ),
+                  const SizedBox(height: 48),
+                  Form(
+                    key: _formKey,
+                    child: Column(
+                      children: [
+                        TextFormField(
+                          controller: _emailController,
+                          decoration: InputDecoration(
+                            labelText: 'Email',
+                            hintText: 'example@email.com',
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide.none,
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide.none,
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: const BorderSide(color: Color(0xFF7A5CFF), width: 2),
+                            ),
+                            prefixIcon: const Icon(Icons.email_outlined, color: Colors.grey),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                          ),
+                          keyboardType: TextInputType.emailAddress,
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Please enter your email';
+                            }
+                            return null;
+                          },
+                          enabled: !isAnyLoading,
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _passwordController,
+                          decoration: InputDecoration(
+                            labelText: 'Password',
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide.none,
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide.none,
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: const BorderSide(color: Color(0xFF7A5CFF), width: 2),
+                            ),
+                            prefixIcon: const Icon(Icons.lock_outline_rounded, color: Colors.grey),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                          ),
+                          obscureText: true,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter your password';
+                            }
+                            return null;
+                          },
+                          enabled: !isAnyLoading,
+                        ),
+                        const SizedBox(height: 32),
+                        SizedBox(
+                          width: double.infinity,
+                          child: FilledButton(
+                            onPressed: isAnyLoading ? null : _handleLogin,
+                            style: FilledButton.styleFrom(
+                              backgroundColor: const Color(0xFF7A5CFF),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: _isLoading
+                                ? const SizedBox(
+                                    height: 24,
+                                    width: 24,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.5,
+                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                    ),
+                                  )
+                                : const Text(
+                                    'Sign In',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: isAnyLoading ? null : _handleGoogleLogin,
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              side: BorderSide(color: Colors.grey.shade300),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              backgroundColor: Colors.white,
+                            ),
+                            icon: _isGoogleLoading
+                                ? const SizedBox(
+                                    height: 24,
+                                    width: 24,
+                                    child: CircularProgressIndicator(strokeWidth: 2.5),
+                                  )
+                                : const Icon(Icons.g_mobiledata, size: 28),
+                            label: const Text(
+                              'Continue with Google',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF1F2937),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        TextButton(
+                          onPressed: isAnyLoading
+                              ? null
+                              : () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => const SignupScreen()),
+                                  );
+                                },
+                          child: RichText(
+                            text: TextSpan(
+                              text: "Don't have an account? ",
+                              style: TextStyle(color: Colors.grey.shade600),
+                              children: const [
+                                TextSpan(
+                                  text: 'Sign Up',
+                                  style: TextStyle(
+                                    color: Color(0xFF7A5CFF),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),

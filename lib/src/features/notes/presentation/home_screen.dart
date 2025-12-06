@@ -252,15 +252,15 @@ class _AvailableSpaceCard extends ConsumerWidget {
         borderRadius: BorderRadius.circular(32.0),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).colorScheme.primary.withAlpha(64),
+            color: const Color(0xFF7A5CFF).withAlpha(64),
             blurRadius: 24,
             offset: const Offset(0, 12),
           ),
         ],
-        gradient: LinearGradient(
+        gradient: const LinearGradient(
           colors: [
-            Theme.of(context).colorScheme.primary,
-            const Color(0xFF8E72FF),
+            Color(0xFF9F8BFF), // Lighter purple top-left
+            Color(0xFF7A5CFF), // Deeper purple bottom-right
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -491,15 +491,81 @@ class _PinnedNoteCard extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 8),
-            if (note.content != null && note.content!.isNotEmpty)
+            if (note.type == NoteType.checklist) ...[
+              if (note.checklistItems.isNotEmpty)
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ...note.checklistItems.take(2).map((item) => Padding(
+                            padding: const EdgeInsets.only(bottom: 2),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  item.isCompleted
+                                      ? Icons.check_box
+                                      : Icons.check_box_outline_blank,
+                                  size: 12,
+                                  color: item.isCompleted
+                                      ? const Color(0xFFF97316)
+                                      : Colors.grey.shade400,
+                                ),
+                                const SizedBox(width: 4),
+                                Expanded(
+                                  child: Text(
+                                    item.content,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: item.isCompleted
+                                          ? Colors.grey.shade400
+                                          : Colors.grey.shade600,
+                                      decoration: item.isCompleted
+                                          ? TextDecoration.lineThrough
+                                          : null,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )),
+                      if (note.checklistItems.length > 2)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Text(
+                            '+ ${note.checklistItems.length - 2}개',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Colors.grey.shade500,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                )
+            ] else if (note.content != null && note.content!.isNotEmpty)
               Expanded(
                 child: Text(
-                  note.content!,
+                  note.content ?? '',
                   style: Theme.of(context).textTheme.bodySmall,
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
+              if (note.attachments.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Icon(
+                      Icons.image_outlined,
+                      size: 16,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ],
+                ),
+              ],
           ],
         ),
       ),

@@ -60,10 +60,36 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             child: searchResults.when(
               data: (notes) {
                 if (_searchController.text.isEmpty) {
-                  return const EmptyStateWidget(
-                    icon: Icons.search,
-                    title: '검색어를 입력하세요',
-                    subtitle: '제목이나 내용으로 메모를 검색할 수 있습니다',
+                  // Show all notes when search is empty
+                  return Consumer(
+                    builder: (context, ref, child) {
+                      final allNotesAsync = ref.watch(allNotesStreamProvider);
+                      return allNotesAsync.when(
+                        data: (notes) => ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: notes.length,
+                          itemBuilder: (context, index) {
+                            final note = notes[index];
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: NoteCard(
+                                note: note,
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => NoteEditorScreen(note: note),
+                                    ),
+                                  );
+                                },
+                              ),
+                            );
+                          },
+                        ),
+                        loading: () => const Center(child: CircularProgressIndicator()),
+                        error: (e, _) => Center(child: Text('Error: $e')),
+                      );
+                    },
                   );
                 }
 

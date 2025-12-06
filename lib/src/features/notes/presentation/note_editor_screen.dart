@@ -26,7 +26,8 @@ class NoteEditorScreen extends ConsumerStatefulWidget {
 }
 
 class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
-  late final FocusNode _contentFocusNode;
+  final FocusNode _contentFocusNode = FocusNode();
+  final FocusNode _titleFocusNode = FocusNode();
   late final TextEditingController _titleController;
   late final TextEditingController _contentController;
   late NoteType _noteType;
@@ -43,7 +44,6 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
     super.initState();
     widget.note?.attachments.loadSync();
 
-    _contentFocusNode = FocusNode();
     _titleController = TextEditingController(text: widget.note?.title ?? '');
     _contentController = TextEditingController(text: widget.note?.content ?? '');
     _noteType = widget.note?.type ?? widget.initialNoteType;
@@ -60,17 +60,28 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
     if (_selectedFolder == null) {
       _loadDefaultFolder();
     }
+
+    // Request focus on title after build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.note == null) {
+        _titleFocusNode.requestFocus();
+      }
+    });
   }
 
   Future<void> _loadDefaultFolder() async {
-    final folders = await ref.read(folderRepositoryProvider).watchAllFolders().first;
-    if (mounted) {
-      setState(() {
-        _selectedFolder = folders.cast<Folder?>().firstWhere(
-              (f) => f?.name == '기타',
-              orElse: () => folders.isNotEmpty ? folders.first : null,
-            );
-      });
+    try {
+      final folders = await ref.read(folderRepositoryProvider).watchAllFolders().first;
+      if (mounted) {
+        setState(() {
+          _selectedFolder = folders.cast<Folder?>().firstWhere(
+                (f) => f?.name == '기타',
+                orElse: () => folders.isNotEmpty ? folders.first : null,
+              );
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading default folder: $e');
     }
   }
 
@@ -79,6 +90,7 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
     _titleController.dispose();
     _contentController.dispose();
     _contentFocusNode.dispose();
+    _titleFocusNode.dispose();
     super.dispose();
   }
 
@@ -178,9 +190,14 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
+        centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
           onPressed: _saveNote,
+        ),
+        title: _FolderSelector(
+          selectedFolder: _selectedFolder,
+          onFolderSelected: (folder) => setState(() => _selectedFolder = folder),
         ),
         actions: [
           IconButton(
@@ -200,8 +217,8 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
           ),
           IconButton(
             tooltip: '저장',
-            onPressed: _saveNote,
             icon: const Icon(Icons.check),
+            onPressed: _saveNote,
           ),
           const SizedBox(width: 8),
         ],
@@ -209,13 +226,6 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: _FolderSelector(
-                selectedFolder: _selectedFolder,
-                onFolderSelected: (folder) => setState(() => _selectedFolder = folder),
-              ),
-            ),
             Expanded(
               child: CustomScrollView(
                 slivers: [
@@ -225,8 +235,10 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          const SizedBox(height: 16),
                           TextField(
                             controller: _titleController,
+                            focusNode: _titleFocusNode,
                             decoration: const InputDecoration(
                               hintText: '제목',
                               border: InputBorder.none,
@@ -235,17 +247,18 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
                               errorBorder: InputBorder.none,
                               disabledBorder: InputBorder.none,
                               contentPadding: EdgeInsets.zero,
+                              filled: false,
                               hintStyle: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.w800,
                                   color: Colors.grey),
                             ),
                             style: const TextStyle(
-                                fontSize: 24, fontWeight: FontWeight.bold),
+                                fontSize: 28, fontWeight: FontWeight.w800),
                             maxLines: null,
                             textInputAction: TextInputAction.next,
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 16),
                           _AttachmentEditor(
                             existingAttachments: _existingAttachments,
                             newAttachments: _newAttachments,
@@ -434,9 +447,11 @@ class _TextEditorBody extends StatelessWidget {
         errorBorder: InputBorder.none,
         disabledBorder: InputBorder.none,
         contentPadding: EdgeInsets.zero,
+        filled: false,
       ),
       style: const TextStyle(fontSize: 16, height: 1.5),
       maxLines: null,
+      minLines: 3,
       scrollPhysics: const NeverScrollableScrollPhysics(),
     );
   }
@@ -482,6 +497,7 @@ class _ChecklistEditorBody extends StatelessWidget {
                         disabledBorder: InputBorder.none,
                         isDense: true,
                         contentPadding: EdgeInsets.zero,
+                        filled: false,
                       ),
                       style: TextStyle(
                         decoration: item.isCompleted ? TextDecoration.lineThrough : null,
@@ -521,41 +537,31 @@ class _FolderSelector extends ConsumerWidget {
       data: (folders) {
         if (folders.isEmpty) return const SizedBox.shrink();
 
-        return Container(
-          margin: const EdgeInsets.only(bottom: 0),
+        return PopupMenuButton<Folder>(
+          initialValue: selectedFolder,
+          onSelected: onFolderSelected,
+          itemBuilder: (context) {
+            return folders.map((folder) {
+              return PopupMenuItem<Folder>(
+                value: folder,
+                child: Text(folder.name),
+              );
+            }).toList();
+          },
           child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              PopupMenuButton<Folder>(
-                initialValue: selectedFolder,
-                onSelected: onFolderSelected,
-                itemBuilder: (context) {
-                  return folders.map((folder) {
-                    return PopupMenuItem<Folder>(
-                      value: folder,
-                      child: Text(folder.name),
-                    );
-                  }).toList();
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        selectedFolder?.name ?? '폴더 선택',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.primary,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Icon(Icons.keyboard_arrow_down_rounded,
-                          size: 18, color: Theme.of(context).colorScheme.primary),
-                    ],
-                  ),
+              Text(
+                selectedFolder?.name ?? '폴더 선택',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 18,
                 ),
               ),
+              const SizedBox(width: 4),
+              Icon(Icons.keyboard_arrow_down_rounded,
+                  size: 20, color: Theme.of(context).colorScheme.onSurface),
             ],
           ),
         );

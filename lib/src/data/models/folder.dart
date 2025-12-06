@@ -20,8 +20,6 @@ class Folder {
 
   String? color;
 
-  String? parentId;
-
   int? sortOrder;
 
   DateTime createdAt = DateTime.now();
@@ -37,7 +35,6 @@ class Folder {
       if (remoteId != null) 'id': remoteId,
       'name': name,
       if (color != null) 'color': color,
-      if (parentId != null) 'parentId': parentId,
       'updatedAt': updatedAt.toIso8601String(),
     };
   }
@@ -48,7 +45,6 @@ class Folder {
       ..remoteId = json['id'] as String?
       ..name = json['name'] as String? ?? ''
       ..color = json['color'] as String?
-      ..parentId = json['parentId'] as String?
       ..createdAt = json['createdAt'] != null
           ? DateTime.parse(json['createdAt'] as String)
           : DateTime.now()

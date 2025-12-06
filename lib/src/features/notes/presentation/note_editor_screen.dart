@@ -131,13 +131,21 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
       _deletedAttachments,
       folder: _selectedFolder,
     )
-        .then((_) {
+        .then((_) async {
       if (widget.note == null) {
         ref.read(analyticsServiceProvider).logNoteCreated(
               folder: folder?.name ?? 'Uncategorized',
               hasImage: (_existingAttachments.isNotEmpty || _newAttachments.isNotEmpty),
             );
       }
+
+      // Auto sync after saving note
+      try {
+        await ref.read(syncServiceProvider).sync();
+      } catch (e) {
+        debugPrint('Auto sync failed: $e');
+      }
+
       if (mounted) {
         Navigator.pop(context);
       }

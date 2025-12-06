@@ -47,23 +47,18 @@ const FolderSchema = CollectionSchema(
       name: r'name',
       type: IsarType.string,
     ),
-    r'parentId': PropertySchema(
-      id: 6,
-      name: r'parentId',
-      type: IsarType.string,
-    ),
     r'remoteId': PropertySchema(
-      id: 7,
+      id: 6,
       name: r'remoteId',
       type: IsarType.string,
     ),
     r'sortOrder': PropertySchema(
-      id: 8,
+      id: 7,
       name: r'sortOrder',
       type: IsarType.long,
     ),
     r'updatedAt': PropertySchema(
-      id: 9,
+      id: 8,
       name: r'updatedAt',
       type: IsarType.dateTime,
     )
@@ -118,12 +113,6 @@ int _folderEstimateSize(
   }
   bytesCount += 3 + object.name.length * 3;
   {
-    final value = object.parentId;
-    if (value != null) {
-      bytesCount += 3 + value.length * 3;
-    }
-  }
-  {
     final value = object.remoteId;
     if (value != null) {
       bytesCount += 3 + value.length * 3;
@@ -144,10 +133,9 @@ void _folderSerialize(
   writer.writeBool(offsets[3], object.isDirty);
   writer.writeDateTime(offsets[4], object.lastSyncedAt);
   writer.writeString(offsets[5], object.name);
-  writer.writeString(offsets[6], object.parentId);
-  writer.writeString(offsets[7], object.remoteId);
-  writer.writeLong(offsets[8], object.sortOrder);
-  writer.writeDateTime(offsets[9], object.updatedAt);
+  writer.writeString(offsets[6], object.remoteId);
+  writer.writeLong(offsets[7], object.sortOrder);
+  writer.writeDateTime(offsets[8], object.updatedAt);
 }
 
 Folder _folderDeserialize(
@@ -164,10 +152,9 @@ Folder _folderDeserialize(
   object.isDirty = reader.readBool(offsets[3]);
   object.lastSyncedAt = reader.readDateTimeOrNull(offsets[4]);
   object.name = reader.readString(offsets[5]);
-  object.parentId = reader.readStringOrNull(offsets[6]);
-  object.remoteId = reader.readStringOrNull(offsets[7]);
-  object.sortOrder = reader.readLongOrNull(offsets[8]);
-  object.updatedAt = reader.readDateTime(offsets[9]);
+  object.remoteId = reader.readStringOrNull(offsets[6]);
+  object.sortOrder = reader.readLongOrNull(offsets[7]);
+  object.updatedAt = reader.readDateTime(offsets[8]);
   return object;
 }
 
@@ -193,10 +180,8 @@ P _folderDeserializeProp<P>(
     case 6:
       return (reader.readStringOrNull(offset)) as P;
     case 7:
-      return (reader.readStringOrNull(offset)) as P;
-    case 8:
       return (reader.readLongOrNull(offset)) as P;
-    case 9:
+    case 8:
       return (reader.readDateTime(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -885,152 +870,6 @@ extension FolderQueryFilter on QueryBuilder<Folder, Folder, QFilterCondition> {
     });
   }
 
-  QueryBuilder<Folder, Folder, QAfterFilterCondition> parentIdIsNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'parentId',
-      ));
-    });
-  }
-
-  QueryBuilder<Folder, Folder, QAfterFilterCondition> parentIdIsNotNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'parentId',
-      ));
-    });
-  }
-
-  QueryBuilder<Folder, Folder, QAfterFilterCondition> parentIdEqualTo(
-    String? value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'parentId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<Folder, Folder, QAfterFilterCondition> parentIdGreaterThan(
-    String? value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'parentId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<Folder, Folder, QAfterFilterCondition> parentIdLessThan(
-    String? value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'parentId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<Folder, Folder, QAfterFilterCondition> parentIdBetween(
-    String? lower,
-    String? upper, {
-    bool includeLower = true,
-    bool includeUpper = true,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'parentId',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<Folder, Folder, QAfterFilterCondition> parentIdStartsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'parentId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<Folder, Folder, QAfterFilterCondition> parentIdEndsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'parentId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<Folder, Folder, QAfterFilterCondition> parentIdContains(
-      String value,
-      {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'parentId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<Folder, Folder, QAfterFilterCondition> parentIdMatches(
-      String pattern,
-      {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'parentId',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<Folder, Folder, QAfterFilterCondition> parentIdIsEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'parentId',
-        value: '',
-      ));
-    });
-  }
-
-  QueryBuilder<Folder, Folder, QAfterFilterCondition> parentIdIsNotEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'parentId',
-        value: '',
-      ));
-    });
-  }
-
   QueryBuilder<Folder, Folder, QAfterFilterCondition> remoteIdIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -1433,18 +1272,6 @@ extension FolderQuerySortBy on QueryBuilder<Folder, Folder, QSortBy> {
     });
   }
 
-  QueryBuilder<Folder, Folder, QAfterSortBy> sortByParentId() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'parentId', Sort.asc);
-    });
-  }
-
-  QueryBuilder<Folder, Folder, QAfterSortBy> sortByParentIdDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'parentId', Sort.desc);
-    });
-  }
-
   QueryBuilder<Folder, Folder, QAfterSortBy> sortByRemoteId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'remoteId', Sort.asc);
@@ -1567,18 +1394,6 @@ extension FolderQuerySortThenBy on QueryBuilder<Folder, Folder, QSortThenBy> {
     });
   }
 
-  QueryBuilder<Folder, Folder, QAfterSortBy> thenByParentId() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'parentId', Sort.asc);
-    });
-  }
-
-  QueryBuilder<Folder, Folder, QAfterSortBy> thenByParentIdDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'parentId', Sort.desc);
-    });
-  }
-
   QueryBuilder<Folder, Folder, QAfterSortBy> thenByRemoteId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'remoteId', Sort.asc);
@@ -1655,13 +1470,6 @@ extension FolderQueryWhereDistinct on QueryBuilder<Folder, Folder, QDistinct> {
     });
   }
 
-  QueryBuilder<Folder, Folder, QDistinct> distinctByParentId(
-      {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'parentId', caseSensitive: caseSensitive);
-    });
-  }
-
   QueryBuilder<Folder, Folder, QDistinct> distinctByRemoteId(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -1722,12 +1530,6 @@ extension FolderQueryProperty on QueryBuilder<Folder, Folder, QQueryProperty> {
   QueryBuilder<Folder, String, QQueryOperations> nameProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'name');
-    });
-  }
-
-  QueryBuilder<Folder, String?, QQueryOperations> parentIdProperty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'parentId');
     });
   }
 
